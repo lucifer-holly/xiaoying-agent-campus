@@ -7,15 +7,17 @@
 
 | 题号 | 题目 | 目录 | 状态 |
 |---|---|---|---|
-| 1 | 待补充 | `q1/` | 未开始 |
-| 2 | 待补充 | `q2/` | 未开始 |
-| 3 | 待补充 | `q3/` | 未开始 |
-| 4 | 待补充 | `q4/` | 未开始 |
+| 1 | 素材审核与发布排期 Agent | `q1-asset-scheduling/` | 未开始 |
+| 2 | 内容任务规划 Agent | `q2-campaign-planning/` | 未开始 |
+| 3 | 企业知识问答 Agent | `q3-knowledge-qa/` | 未开始 |
+| 4 | 短视频脚本 Agent | `q4-video-script/` | 未开始 |
+
+详细拆解、设计与交接见 [PLAN.md](PLAN.md)。
 
 ## 每题目录结构
 
 ```text
-qN/
+<题目目录>/
 ├── README.md            # 环境、安装、运行、评审入口
 ├── requirements.txt     # 依赖
 ├── .env.example         # 所需变量；无变量时注明无需配置
