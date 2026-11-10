@@ -40,14 +40,14 @@ git config user.name "lucifer-holly" && git config user.email "63133305+lucifer-
 - 定位：补充体验，README 主入口仍是 CLI 命令；规则写明截图/视频不能替代代码
 - ① 回放页（必做）：`q1-asset-scheduling/demo/` 静态页，读取 `examples/*.trace.json` 逐步展示真实模型 Trace；发布到 GitHub Pages
 - ② 实时演示（已确认要做）：同一套 Agent 外包一层 HTTP API + 简单网页，部署方式**照搬 booksprite**（参考 `lucifer-holly/booksprite` 的 `scripts/deploy.sh` 与 `docs/DEVELOPMENT.md` 第 7 节）：
-  - 地址：`https://agent.gret.me/`（子域名待用户最终确认）；用户已有 `gamesci.gret.me` 在同一台阿里云服务器上
+  - 地址：`https://xiaoying.gret.me/`（用户已确认，DNS 已配置）；用户已有 `gamesci.gret.me` 在同一台阿里云服务器上
   - 栈：Caddy（自动 HTTPS、反代）+ systemd 服务 `xiaoying-agent`（以 caddy 用户运行，`ProtectSystem=strict`）+ 目录 `/srv/xiaoying-agent`；应用监听 `127.0.0.1:<端口>`，不得与 booksprite 的 3000 冲突
   - 部署：`scripts/deploy.sh` 在**用户本机**执行，SSH 别名默认 `aliyun`（可用环境变量覆盖），rsync 同步代码 → 服务器 venv 安装依赖 → 重启 → HTTPS 健康检查 `/api/health`
   - 服务器约束：内存约 1.6G，依赖保持最少；脚本先检查 Python >= 3.10，不满足时给出安装指引
   - 密钥：只放服务器 `/srv/xiaoying-agent/.env`（`LLM_API_KEY`、`LLM_BASE_URL`、`LLM_MODEL`、`DEMO_ACCESS_CODE`、限流参数），部署脚本不覆盖
   - 防护：访问口令、按 IP 限流、每日调用上限，超限自动切回放；页面明确标注“仅保存草稿，不会真实发布”
   - 云端会话不持有服务器 SSH 凭据；交付 `deploy/`（Caddy 站点片段、systemd unit、.env 模板）+ `scripts/deploy.sh` + 分步说明
-- 用户部署时要做：① DNS 添加 `agent` 子域 A 记录指向服务器 IP；② 把 Caddy 片段加入服务器 Caddyfile 并 reload；③ 创建服务器 `.env`；④ 本机执行 `scripts/deploy.sh`
+- 部署细节由执行 Agent 自行设计（用户授权）；用户部署时要做：① （DNS 已由用户完成）② 把 Caddy 片段加入服务器 Caddyfile 并 reload；③ 创建服务器 `.env`；④ 本机执行 `scripts/deploy.sh`
 
 ## 1. 总原则
 
