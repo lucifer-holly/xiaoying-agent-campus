@@ -1,0 +1,20 @@
+{
+  "case": "03-missing-asset-info",
+  "title": "素材信息缺失：M02 没有文案和封面，停止排期并请申请人补充",
+  "covers": ["素材信息缺失", "信息或资料不足"],
+  "request": {
+    "request_id": "REQ-1113-002",
+    "asset_id": "M02",
+    "channel": "douyin",
+    "publish_at": "2026-11-13 19:00",
+    "requester": "门店组·陈拓",
+    "note": "门店探访第 4 期，尽快排上。",
+    "constraints": {}
+  },
+  "fault_injection": {},
+  "expected": {
+    "status": "needs_input",
+    "missing_fields_include": ["caption", "cover_url"],
+    "tools_exclude": ["save_draft"]
+  }
+}

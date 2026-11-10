@@ -1,0 +1,48 @@
+{
+  "request_id": "REQ-1113-001",
+  "status": "completed",
+  "status_label": "已保存排期草稿",
+  "message": "已按申请为素材 M01 在抖音 2026-11-13 18:00 保存排期草稿 D-9C79257D，规则检查通过、时段空闲。草稿仅占位未发布，请在发布系统人工确认后才会正式发布。",
+  "draft": {
+    "draft_id": "D-9C79257D",
+    "status": "scheduled_draft",
+    "asset_id": "M01",
+    "asset_version": 3,
+    "channel": "douyin",
+    "publish_at": "2026-11-13 18:00",
+    "requested_publish_at": "2026-11-13 18:00",
+    "change_reason": null,
+    "warnings": [],
+    "created_at": "2026-11-10T21:53:16+08:00",
+    "created_in_this_run": true
+  },
+  "schedule": {
+    "requested_publish_at": "2026-11-13 18:00",
+    "draft_publish_at": "2026-11-13 18:00",
+    "changed": false
+  },
+  "review": {
+    "verdict": "pass",
+    "deep_check": false,
+    "findings": [],
+    "resolved": []
+  },
+  "missing_fields": [],
+  "risk_rule_ids": [],
+  "confirmation_question": null,
+  "notice": "本 Agent 只保存排期草稿，没有发布能力；草稿需要人工在发布系统确认后才会发布。",
+  "validator": {
+    "corrections": [],
+    "warnings": []
+  },
+  "run": {
+    "llm_mode": "real",
+    "model": "qwen3.8-max",
+    "prompt_version": "q1-v2",
+    "steps_used": 5,
+    "tool_calls_used": 5,
+    "max_steps": 8,
+    "max_tool_calls": 10,
+    "end_reason": "finish"
+  }
+}

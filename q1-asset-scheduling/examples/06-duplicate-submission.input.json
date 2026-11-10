@@ -1,0 +1,21 @@
+{
+  "case": "06-duplicate-submission",
+  "title": "重复提交：同一申请连续提交两次（共用草稿库），只产生一份草稿",
+  "covers": ["重复提交", "save_draft 按内容哈希幂等"],
+  "request": {
+    "request_id": "REQ-1114-001",
+    "asset_id": "M06",
+    "channel": "xiaohongshu",
+    "publish_at": "2026-11-14 12:00",
+    "requester": "生活组·唐棠",
+    "note": "露营清单，周末中午发。",
+    "constraints": {}
+  },
+  "fault_injection": {},
+  "options": {"repeat": 2},
+  "expected": {
+    "status": "completed",
+    "drafts_for_request": 1,
+    "second_run_created": false
+  }
+}

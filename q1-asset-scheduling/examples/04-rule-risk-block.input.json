@@ -1,0 +1,20 @@
+{
+  "case": "04-rule-risk-block",
+  "title": "规则风险：M03 文案含绝对化用语，阻断，不排期",
+  "covers": ["规则风险", "发现风险 → 阻断"],
+  "request": {
+    "request_id": "REQ-1113-003",
+    "asset_id": "M03",
+    "channel": "xiaohongshu",
+    "publish_at": "2026-11-13 12:00",
+    "requester": "电商组·许诺",
+    "note": "双十一保温杯种草，想赶在 11/13 中午发。",
+    "constraints": {}
+  },
+  "fault_injection": {},
+  "expected": {
+    "status": "blocked",
+    "risk_rule_ids_include": ["R02"],
+    "tools_exclude": ["save_draft"]
+  }
+}

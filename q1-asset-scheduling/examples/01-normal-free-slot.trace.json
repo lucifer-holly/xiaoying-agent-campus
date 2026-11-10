@@ -1,0 +1,260 @@
+{
+  "trace_format": "q1-trace/v1",
+  "run_id": "82f2afe1ebdc",
+  "case_id": "01-normal-free-slot",
+  "llm_mode": "real",
+  "model": "qwen3.8-max",
+  "prompt_version": "q1-v2",
+  "started_at": "2026-11-10T21:53:08+08:00",
+  "finished_at": "2026-11-10T21:53:19+08:00",
+  "limits": {
+    "max_steps": 8,
+    "max_tool_calls": 10
+  },
+  "request": {
+    "request_id": "REQ-1113-001",
+    "asset_id": "M01",
+    "channel": "douyin",
+    "publish_at": "2026-11-13 18:00",
+    "requester": "运营·周宁",
+    "note": "配合晚间直播预热，日期不能改。",
+    "constraints": {
+      "date_fixed": true
+    }
+  },
+  "fault_injection": {},
+  "steps": [
+    {
+      "step": 1,
+      "tool": "read_asset",
+      "args": {
+        "asset_id": "M01"
+      },
+      "decision_note": "先读取素材详情，确认必填信息是否齐全，再决定能否继续排期流程。",
+      "ok": true,
+      "result_summary": "M01《冬季轻暖羽绒服上新｜30 秒看懂三种通勤穿搭》video；30 秒；必填齐全；音乐授权 licensed",
+      "next_action": "check_rules",
+      "observation": {
+        "ok": true,
+        "data": {
+          "asset": {
+            "asset_id": "M01",
+            "title": "冬季轻暖羽绒服上新｜30 秒看懂三种通勤穿搭",
+            "type": "video",
+            "duration_sec": 30,
+            "caption": "今冬轻暖羽绒服上新，三种通勤穿搭一次看懂。#冬季穿搭 #通勤",
+            "cover_url": "https://assets.example.com/m01/cover-v3.jpg",
+            "tags": [
+              "冬季穿搭",
+              "羽绒服"
+            ],
+            "music": {
+              "track": "Morning Walk",
+              "license_id": "LIC-2026-0311",
+              "license_status": "licensed"
+            },
+            "owner": "内容组·林悦",
+            "version": 3,
+            "updated_at": "2026-11-09 16:20"
+          },
+          "missing_fields": [],
+          "missing_labels": [],
+          "complete": true
+        }
+      },
+      "llm": {
+        "latency_ms": 1891,
+        "prompt_tokens": 2234,
+        "completion_tokens": 59
+      }
+    },
+    {
+      "step": 2,
+      "tool": "check_rules",
+      "args": {
+        "asset_id": "M01",
+        "channel": "douyin"
+      },
+      "decision_note": "素材信息完整，按抖音渠道做规则检查，确认是否可排期。",
+      "ok": true,
+      "result_summary": "verdict=pass；全部规则通过",
+      "next_action": "query_slots",
+      "observation": {
+        "ok": true,
+        "data": {
+          "asset_id": "M01",
+          "asset_version": 3,
+          "channel": "douyin",
+          "deep_check": false,
+          "verdict": "pass",
+          "findings": [],
+          "resolved": [],
+          "checked_rules": [
+            "R01",
+            "R02",
+            "R03",
+            "R04",
+            "R05"
+          ]
+        }
+      },
+      "llm": {
+        "latency_ms": 1836,
+        "prompt_tokens": 2503,
+        "completion_tokens": 71
+      }
+    },
+    {
+      "step": 3,
+      "tool": "query_slots",
+      "args": {
+        "channel": "douyin",
+        "date": "2026-11-13",
+        "time": "18:00"
+      },
+      "decision_note": "规则检查通过，查询申请时段 2026-11-13 18:00 是否空闲。",
+      "ok": true,
+      "result_summary": "抖音 2026-11-13 18:00：free",
+      "next_action": "save_draft",
+      "observation": {
+        "ok": true,
+        "data": {
+          "channel": "douyin",
+          "channel_name": "抖音",
+          "date": "2026-11-13",
+          "slots": [
+            {
+              "time": "18:00",
+              "status": "free"
+            }
+          ]
+        }
+      },
+      "llm": {
+        "latency_ms": 1838,
+        "prompt_tokens": 2675,
+        "completion_tokens": 101
+      }
+    },
+    {
+      "step": 4,
+      "tool": "save_draft",
+      "args": {
+        "asset_id": "M01",
+        "channel": "douyin",
+        "publish_at": "2026-11-13 18:00",
+        "requires_confirmation": false
+      },
+      "decision_note": "申请时段空闲且日期固定，按申请时间直接保存排期草稿。",
+      "ok": true,
+      "result_summary": "草稿 D-9C79257D 新建，状态 scheduled_draft，2026-11-13 18:00",
+      "next_action": "finish",
+      "observation": {
+        "ok": true,
+        "data": {
+          "created": true,
+          "draft": {
+            "draft_id": "D-9C79257D",
+            "idempotency_key": "9c79257dfef02929c2dd638f60557b21d4052827d8c33ac2477839db77a12c91",
+            "request_id": "REQ-1113-001",
+            "asset_id": "M01",
+            "asset_version": 3,
+            "title": "冬季轻暖羽绒服上新｜30 秒看懂三种通勤穿搭",
+            "channel": "douyin",
+            "publish_at": "2026-11-13 18:00",
+            "requested_publish_at": "2026-11-13 18:00",
+            "status": "scheduled_draft",
+            "change_reason": null,
+            "rule_verdict": "pass",
+            "warnings": [],
+            "created_at": "2026-11-10T21:53:16+08:00"
+          },
+          "message": "草稿已保存（未发布）"
+        }
+      },
+      "llm": {
+        "latency_ms": 1840,
+        "prompt_tokens": 2852,
+        "completion_tokens": 111
+      }
+    },
+    {
+      "step": 5,
+      "tool": "finish",
+      "args": {
+        "status": "completed",
+        "message": "已按申请为素材 M01 在抖音 2026-11-13 18:00 保存排期草稿 D-9C79257D，规则检查通过、时段空闲。草稿仅占位未发布，请在发布系统人工确认后才会正式发布。",
+        "draft_id": "D-9C79257D",
+        "publish_at": "2026-11-13 18:00"
+      },
+      "decision_note": "草稿已成功保存，流程完成，提交最终结果。",
+      "ok": true,
+      "result_summary": "模型提交 status=completed；校验后 status=completed（无更正）",
+      "next_action": "结束",
+      "observation": {
+        "validated_status": "completed",
+        "corrections": []
+      },
+      "llm": {
+        "latency_ms": 2967,
+        "prompt_tokens": 3252,
+        "completion_tokens": 173
+      }
+    }
+  ],
+  "end_reason": "finish",
+  "final": {
+    "request_id": "REQ-1113-001",
+    "status": "completed",
+    "status_label": "已保存排期草稿",
+    "message": "已按申请为素材 M01 在抖音 2026-11-13 18:00 保存排期草稿 D-9C79257D，规则检查通过、时段空闲。草稿仅占位未发布，请在发布系统人工确认后才会正式发布。",
+    "draft": {
+      "draft_id": "D-9C79257D",
+      "status": "scheduled_draft",
+      "asset_id": "M01",
+      "asset_version": 3,
+      "channel": "douyin",
+      "publish_at": "2026-11-13 18:00",
+      "requested_publish_at": "2026-11-13 18:00",
+      "change_reason": null,
+      "warnings": [],
+      "created_at": "2026-11-10T21:53:16+08:00",
+      "created_in_this_run": true
+    },
+    "schedule": {
+      "requested_publish_at": "2026-11-13 18:00",
+      "draft_publish_at": "2026-11-13 18:00",
+      "changed": false
+    },
+    "review": {
+      "verdict": "pass",
+      "deep_check": false,
+      "findings": [],
+      "resolved": []
+    },
+    "missing_fields": [],
+    "risk_rule_ids": [],
+    "confirmation_question": null,
+    "notice": "本 Agent 只保存排期草稿，没有发布能力；草稿需要人工在发布系统确认后才会发布。",
+    "validator": {
+      "corrections": [],
+      "warnings": []
+    },
+    "run": {
+      "llm_mode": "real",
+      "model": "qwen3.8-max",
+      "prompt_version": "q1-v2",
+      "steps_used": 5,
+      "tool_calls_used": 5,
+      "max_steps": 8,
+      "max_tool_calls": 10,
+      "end_reason": "finish"
+    }
+  },
+  "llm_usage": {
+    "calls": 5,
+    "prompt_tokens": 13516,
+    "completion_tokens": 515,
+    "latency_ms": 10372
+  }
+}

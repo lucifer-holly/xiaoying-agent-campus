@@ -1,0 +1,20 @@
+{
+  "case": "07-save-failure",
+  "title": "保存失败：草稿库不可用，如实返回失败，不虚报保存成功",
+  "covers": ["保存失败", "工具失败"],
+  "request": {
+    "request_id": "REQ-1114-002",
+    "asset_id": "M05",
+    "channel": "douyin",
+    "publish_at": "2026-11-14 19:00",
+    "requester": "生活组·唐棠",
+    "note": "早餐系列，周五晚上发。",
+    "constraints": {}
+  },
+  "fault_injection": {"save_draft": "error"},
+  "expected": {
+    "status": "failed",
+    "draft": null,
+    "tools_include": ["save_draft"]
+  }
+}

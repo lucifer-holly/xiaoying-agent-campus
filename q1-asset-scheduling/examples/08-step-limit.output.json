@@ -1,0 +1,62 @@
+{
+  "request_id": "REQ-1112-002",
+  "status": "incomplete_step_limit",
+  "status_label": "未完成（达到步数上限）",
+  "message": "达到步数上限（3），任务未完成；已完成的步骤见 completed_steps。",
+  "draft": null,
+  "schedule": {
+    "requested_publish_at": "2026-11-12 18:00",
+    "draft_publish_at": null,
+    "changed": false
+  },
+  "review": {
+    "verdict": "pass",
+    "deep_check": false,
+    "findings": [],
+    "resolved": []
+  },
+  "missing_fields": [],
+  "risk_rule_ids": [],
+  "confirmation_question": null,
+  "notice": "本 Agent 只保存排期草稿，没有发布能力；草稿需要人工在发布系统确认后才会发布。",
+  "validator": {
+    "corrections": [],
+    "warnings": []
+  },
+  "completed_steps": [
+    {
+      "tool": "read_asset",
+      "ok": true,
+      "args": {
+        "asset_id": "M01"
+      }
+    },
+    {
+      "tool": "check_rules",
+      "ok": true,
+      "args": {
+        "asset_id": "M01",
+        "channel": "douyin"
+      }
+    },
+    {
+      "tool": "query_slots",
+      "ok": true,
+      "args": {
+        "channel": "douyin",
+        "date": "2026-11-12",
+        "time": "18:00"
+      }
+    }
+  ],
+  "run": {
+    "llm_mode": "real",
+    "model": "qwen3.8-max",
+    "prompt_version": "q1-v2",
+    "steps_used": 3,
+    "tool_calls_used": 3,
+    "max_steps": 3,
+    "max_tool_calls": 10,
+    "end_reason": "step_limit"
+  }
+}

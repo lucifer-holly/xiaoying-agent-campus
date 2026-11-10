@@ -1,0 +1,36 @@
+{
+  "request_id": "REQ-1114-002",
+  "status": "failed",
+  "status_label": "未完成（失败）",
+  "message": "素材 M05 信息完整且抖音规则检查通过，申请时段 2026-11-14 19:00 也空闲，但保存排期草稿时草稿库写入失败（STORAGE_UNAVAILABLE），已按规则重试一次仍失败，本次未生成草稿。请稍后重新提交该排期申请或联系系统运维确认存储服务恢复后再试。",
+  "draft": null,
+  "schedule": {
+    "requested_publish_at": "2026-11-14 19:00",
+    "draft_publish_at": null,
+    "changed": false
+  },
+  "review": {
+    "verdict": "pass",
+    "deep_check": false,
+    "findings": [],
+    "resolved": []
+  },
+  "missing_fields": [],
+  "risk_rule_ids": [],
+  "confirmation_question": null,
+  "notice": "本 Agent 只保存排期草稿，没有发布能力；草稿需要人工在发布系统确认后才会发布。",
+  "validator": {
+    "corrections": [],
+    "warnings": []
+  },
+  "run": {
+    "llm_mode": "real",
+    "model": "qwen3.8-max",
+    "prompt_version": "q1-v2",
+    "steps_used": 6,
+    "tool_calls_used": 6,
+    "max_steps": 8,
+    "max_tool_calls": 10,
+    "end_reason": "finish"
+  }
+}

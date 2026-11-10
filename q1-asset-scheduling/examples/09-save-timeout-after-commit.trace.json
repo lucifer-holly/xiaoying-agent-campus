@@ -1,0 +1,287 @@
+{
+  "trace_format": "q1-trace/v1",
+  "run_id": "8a293cd7fa27",
+  "case_id": "09-save-timeout-after-commit",
+  "llm_mode": "real",
+  "model": "qwen3.8-max",
+  "prompt_version": "q1-v2",
+  "started_at": "2026-11-10T21:54:36+08:00",
+  "finished_at": "2026-11-10T21:54:49+08:00",
+  "limits": {
+    "max_steps": 8,
+    "max_tool_calls": 10
+  },
+  "request": {
+    "request_id": "REQ-1113-005",
+    "asset_id": "M05",
+    "channel": "xiaohongshu",
+    "publish_at": "2026-11-13 09:00",
+    "requester": "生活组·唐棠",
+    "note": "早餐系列，周五早上发。",
+    "constraints": {}
+  },
+  "fault_injection": {
+    "save_draft": "timeout_after_commit"
+  },
+  "steps": [
+    {
+      "step": 1,
+      "tool": "read_asset",
+      "args": {
+        "asset_id": "M05"
+      },
+      "decision_note": "先读取素材 M05 的详情，确认必填信息是否齐全，再决定后续规则检查与排期。",
+      "ok": true,
+      "result_summary": "M05《燕麦杯的三种早餐做法》video；38 秒；必填齐全；音乐授权 licensed",
+      "next_action": "check_rules",
+      "observation": {
+        "ok": true,
+        "data": {
+          "asset": {
+            "asset_id": "M05",
+            "title": "燕麦杯的三种早餐做法",
+            "type": "video",
+            "duration_sec": 38,
+            "caption": "前一晚备好，早上 3 分钟搞定燕麦杯，三种口味轮着吃。#早餐 #燕麦",
+            "cover_url": "https://assets.example.com/m05/cover-v1.jpg",
+            "tags": [
+              "早餐"
+            ],
+            "music": {
+              "track": "Sunny Kitchen",
+              "license_id": "LIC-2026-0520",
+              "license_status": "licensed"
+            },
+            "owner": "生活组·唐棠",
+            "version": 1,
+            "updated_at": "2026-11-10 10:30"
+          },
+          "missing_fields": [],
+          "missing_labels": [],
+          "complete": true
+        }
+      },
+      "llm": {
+        "latency_ms": 1561,
+        "prompt_tokens": 2226,
+        "completion_tokens": 65
+      }
+    },
+    {
+      "step": 2,
+      "tool": "check_rules",
+      "args": {
+        "asset_id": "M05",
+        "channel": "xiaohongshu"
+      },
+      "decision_note": "素材信息完整，按小红书渠道做规则检查，确认是否可排期。",
+      "ok": true,
+      "result_summary": "verdict=pass；全部规则通过",
+      "next_action": "query_slots",
+      "observation": {
+        "ok": true,
+        "data": {
+          "asset_id": "M05",
+          "asset_version": 1,
+          "channel": "xiaohongshu",
+          "deep_check": false,
+          "verdict": "pass",
+          "findings": [],
+          "resolved": [],
+          "checked_rules": [
+            "R01",
+            "R02",
+            "R03",
+            "R04",
+            "R05"
+          ]
+        }
+      },
+      "llm": {
+        "latency_ms": 1732,
+        "prompt_tokens": 2495,
+        "completion_tokens": 74
+      }
+    },
+    {
+      "step": 3,
+      "tool": "query_slots",
+      "args": {
+        "channel": "xiaohongshu",
+        "date": "2026-11-13",
+        "time": "09:00"
+      },
+      "decision_note": "规则检查通过，查询申请时段 2026-11-13 09:00 在小红书是否空闲。",
+      "ok": true,
+      "result_summary": "小红书 2026-11-13 09:00：free",
+      "next_action": "save_draft",
+      "observation": {
+        "ok": true,
+        "data": {
+          "channel": "xiaohongshu",
+          "channel_name": "小红书",
+          "date": "2026-11-13",
+          "slots": [
+            {
+              "time": "09:00",
+              "status": "free"
+            }
+          ]
+        }
+      },
+      "llm": {
+        "latency_ms": 1945,
+        "prompt_tokens": 2673,
+        "completion_tokens": 106
+      }
+    },
+    {
+      "step": 4,
+      "tool": "save_draft",
+      "args": {
+        "asset_id": "M05",
+        "channel": "xiaohongshu",
+        "publish_at": "2026-11-13 09:00",
+        "requires_confirmation": false
+      },
+      "decision_note": "申请时段空闲且与申请时间一致，直接保存排期草稿，无需申请人确认。",
+      "ok": false,
+      "result_summary": "失败 TIMEOUT：保存接口响应超时（10 秒），无法确认是否已写入（可重试）",
+      "next_action": "save_draft",
+      "observation": {
+        "ok": false,
+        "error": {
+          "code": "TIMEOUT",
+          "message": "保存接口响应超时（10 秒），无法确认是否已写入",
+          "retryable": true
+        }
+      },
+      "llm": {
+        "latency_ms": 2103,
+        "prompt_tokens": 2858,
+        "completion_tokens": 117
+      }
+    },
+    {
+      "step": 5,
+      "tool": "save_draft",
+      "args": {
+        "asset_id": "M05",
+        "channel": "xiaohongshu",
+        "publish_at": "2026-11-13 09:00",
+        "requires_confirmation": false
+      },
+      "decision_note": "上次保存超时且可重试，按规则重试一次以确认草稿是否写入。",
+      "ok": true,
+      "result_summary": "草稿 D-862480F4 已存在（本次处理中前一次调用已写入，未新建），状态 scheduled_draft，2026-11-13 09:00",
+      "next_action": "finish",
+      "observation": {
+        "ok": true,
+        "data": {
+          "created": false,
+          "draft": {
+            "draft_id": "D-862480F4",
+            "idempotency_key": "862480f46975ee55f93b6e6c509fef2d36bd1bd3fdf20e90ba7d089fdcde00c7",
+            "request_id": "REQ-1113-005",
+            "asset_id": "M05",
+            "asset_version": 1,
+            "title": "燕麦杯的三种早餐做法",
+            "channel": "xiaohongshu",
+            "publish_at": "2026-11-13 09:00",
+            "requested_publish_at": "2026-11-13 09:00",
+            "status": "scheduled_draft",
+            "change_reason": null,
+            "rule_verdict": "pass",
+            "warnings": [],
+            "created_at": "2026-11-10T21:54:44+08:00"
+          },
+          "written_earlier_in_this_run": true,
+          "message": "这份草稿是本次处理中前一次 save_draft 写入的（上次接口没有正常返回，但写入已生效），没有新建草稿"
+        }
+      },
+      "llm": {
+        "latency_ms": 1893,
+        "prompt_tokens": 3034,
+        "completion_tokens": 115
+      }
+    },
+    {
+      "step": 6,
+      "tool": "finish",
+      "args": {
+        "status": "completed",
+        "message": "已按申请将素材 M05 排入小红书 2026-11-13 09:00，草稿编号 D-862480F4。规则检查通过、时段空闲，无需额外确认；请在发布系统中人工确认后发布。",
+        "draft_id": "D-862480F4",
+        "publish_at": "2026-11-13 09:00"
+      },
+      "decision_note": "草稿已成功保存（重试后确认写入），按申请时间完成排期，提交 completed 结果。",
+      "ok": true,
+      "result_summary": "模型提交 status=completed；校验后 status=completed（无更正）",
+      "next_action": "结束",
+      "observation": {
+        "validated_status": "completed",
+        "corrections": []
+      },
+      "llm": {
+        "latency_ms": 3265,
+        "prompt_tokens": 3459,
+        "completion_tokens": 178
+      }
+    }
+  ],
+  "end_reason": "finish",
+  "final": {
+    "request_id": "REQ-1113-005",
+    "status": "completed",
+    "status_label": "已保存排期草稿",
+    "message": "已按申请将素材 M05 排入小红书 2026-11-13 09:00，草稿编号 D-862480F4。规则检查通过、时段空闲，无需额外确认；请在发布系统中人工确认后发布。",
+    "draft": {
+      "draft_id": "D-862480F4",
+      "status": "scheduled_draft",
+      "asset_id": "M05",
+      "asset_version": 1,
+      "channel": "xiaohongshu",
+      "publish_at": "2026-11-13 09:00",
+      "requested_publish_at": "2026-11-13 09:00",
+      "change_reason": null,
+      "warnings": [],
+      "created_at": "2026-11-10T21:54:44+08:00",
+      "created_in_this_run": true
+    },
+    "schedule": {
+      "requested_publish_at": "2026-11-13 09:00",
+      "draft_publish_at": "2026-11-13 09:00",
+      "changed": false
+    },
+    "review": {
+      "verdict": "pass",
+      "deep_check": false,
+      "findings": [],
+      "resolved": []
+    },
+    "missing_fields": [],
+    "risk_rule_ids": [],
+    "confirmation_question": null,
+    "notice": "本 Agent 只保存排期草稿，没有发布能力；草稿需要人工在发布系统确认后才会发布。",
+    "validator": {
+      "corrections": [],
+      "warnings": []
+    },
+    "run": {
+      "llm_mode": "real",
+      "model": "qwen3.8-max",
+      "prompt_version": "q1-v2",
+      "steps_used": 6,
+      "tool_calls_used": 6,
+      "max_steps": 8,
+      "max_tool_calls": 10,
+      "end_reason": "finish"
+    }
+  },
+  "llm_usage": {
+    "calls": 6,
+    "prompt_tokens": 16745,
+    "completion_tokens": 655,
+    "latency_ms": 12499
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "case": "02-slot-conflict",
+  "title": "时段冲突：M01 申请 18:00 已被占用，改到同日最近的空闲时段 19:00 并待确认",
+  "covers": ["时段冲突", "ReAct 路径 B：18:00 占用 → 查询当天时段 → 19:00 待确认后保存", "硬性要求（日期不能改）不擅自更改"],
+  "request": {
+    "request_id": "REQ-1112-001",
+    "asset_id": "M01",
+    "channel": "douyin",
+    "publish_at": "2026-11-12 18:00",
+    "requester": "运营·周宁",
+    "note": "配合晚间直播预热，日期不能改。",
+    "constraints": {"date_fixed": true}
+  },
+  "fault_injection": {},
+  "expected": {
+    "status": "needs_confirmation",
+    "draft_status": "pending_confirmation",
+    "draft_publish_at": "2026-11-12 19:00",
+    "tools_include": ["read_asset", "check_rules", "query_slots", "save_draft"]
+  }
+}

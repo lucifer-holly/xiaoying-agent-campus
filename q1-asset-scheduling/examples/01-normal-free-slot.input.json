@@ -1,0 +1,21 @@
+{
+  "case": "01-normal-free-slot",
+  "title": "正常排期：申请时段空闲，按申请时间保存草稿",
+  "covers": ["正常排期", "ReAct 路径 A：18:00 空闲 → 直接保存"],
+  "request": {
+    "request_id": "REQ-1113-001",
+    "asset_id": "M01",
+    "channel": "douyin",
+    "publish_at": "2026-11-13 18:00",
+    "requester": "运营·周宁",
+    "note": "配合晚间直播预热，日期不能改。",
+    "constraints": {"date_fixed": true}
+  },
+  "fault_injection": {},
+  "expected": {
+    "status": "completed",
+    "draft_status": "scheduled_draft",
+    "draft_publish_at": "2026-11-13 18:00",
+    "tools_include": ["read_asset", "check_rules", "query_slots", "save_draft"]
+  }
+}

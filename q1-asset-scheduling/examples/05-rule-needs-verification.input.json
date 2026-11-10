@@ -1,0 +1,21 @@
+{
+  "case": "05-rule-needs-verification",
+  "title": "规则待补查：M04 音乐授权显示审批中，补查版权库通过后再排期",
+  "covers": ["规则风险", "发现风险 → 补查（deep_check）→ 通过后继续"],
+  "request": {
+    "request_id": "REQ-1113-004",
+    "asset_id": "M04",
+    "channel": "wechat_channels",
+    "publish_at": "2026-11-13 12:00",
+    "requester": "数码组·韩笑",
+    "note": "新品开箱，正常排期。",
+    "constraints": {}
+  },
+  "fault_injection": {},
+  "expected": {
+    "status": "completed",
+    "draft_status": "scheduled_draft",
+    "draft_publish_at": "2026-11-13 12:00",
+    "deep_check_called": true
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "request_id": "REQ-1112-001",
+  "status": "needs_confirmation",
+  "status_label": "等待申请人确认",
+  "message": "素材 M01 规则检查已通过，但申请的抖音 2026-11-12 18:00 时段已被「双十一晚会直播预告」占用。因申请单标注日期不能改，当天尚有 09:00、19:00、21:00 三个空闲时段，其中 19:00 最接近原申请时间。请确认是否将排期调整到 2026-11-12 19:00，或允许更换其他日期/时段。",
+  "draft": null,
+  "schedule": {
+    "requested_publish_at": "2026-11-12 18:00",
+    "draft_publish_at": null,
+    "changed": false
+  },
+  "review": {
+    "verdict": "pass",
+    "deep_check": false,
+    "findings": [],
+    "resolved": []
+  },
+  "missing_fields": [],
+  "risk_rule_ids": [],
+  "confirmation_question": "是否将发布时间调整为 2026-11-12 19:00（当天最接近原申请时段的空闲时段）？如不同意，请告知可接受的时段或是否允许更换日期。",
+  "notice": "本 Agent 只保存排期草稿，没有发布能力；草稿需要人工在发布系统确认后才会发布。",
+  "validator": {
+    "corrections": [],
+    "warnings": []
+  },
+  "run": {
+    "llm_mode": "real",
+    "model": "qwen3.8-max",
+    "prompt_version": "q1-v1",
+    "steps_used": 5,
+    "tool_calls_used": 5,
+    "max_steps": 8,
+    "max_tool_calls": 10,
+    "end_reason": "finish"
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "request_id": "REQ-1113-003",
+  "status": "blocked",
+  "status_label": "规则风险，已阻断",
+  "message": "素材 M03 在小红书渠道规则检查未通过，命中 R02「绝对化用语」：文案含“销量第一”“史上最”“最强”等表述，已阻断排期。请删除或改写这些绝对化用语后重新提交审核，再发起排期申请。",
+  "draft": null,
+  "schedule": {
+    "requested_publish_at": "2026-11-13 12:00",
+    "draft_publish_at": null,
+    "changed": false
+  },
+  "review": {
+    "verdict": "block",
+    "deep_check": false,
+    "findings": [
+      {
+        "rule_id": "R02",
+        "name": "绝对化用语",
+        "level": "block",
+        "evidence": [
+          "销量第一",
+          "史上最",
+          "最强"
+        ],
+        "message": "标题或文案含绝对化用语：销量第一、史上最、最强",
+        "suggestion": "删除或改写这些表述后重新提交审核"
+      }
+    ],
+    "resolved": []
+  },
+  "missing_fields": [],
+  "risk_rule_ids": [
+    "R02"
+  ],
+  "confirmation_question": null,
+  "notice": "本 Agent 只保存排期草稿，没有发布能力；草稿需要人工在发布系统确认后才会发布。",
+  "validator": {
+    "corrections": [],
+    "warnings": []
+  },
+  "run": {
+    "llm_mode": "real",
+    "model": "qwen3.8-max",
+    "prompt_version": "q1-v2",
+    "steps_used": 3,
+    "tool_calls_used": 3,
+    "max_steps": 8,
+    "max_tool_calls": 10,
+    "end_reason": "finish"
+  }
+}

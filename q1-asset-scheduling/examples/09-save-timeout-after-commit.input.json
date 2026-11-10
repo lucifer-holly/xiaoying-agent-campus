@@ -1,0 +1,21 @@
+{
+  "case": "09-save-timeout-after-commit",
+  "title": "保存超时但已写入：重试命中幂等，只有一份草稿，状态以草稿库为准",
+  "covers": ["工具失败", "重复提交（重试）", "保存状态如实返回"],
+  "request": {
+    "request_id": "REQ-1113-005",
+    "asset_id": "M05",
+    "channel": "xiaohongshu",
+    "publish_at": "2026-11-13 09:00",
+    "requester": "生活组·唐棠",
+    "note": "早餐系列，周五早上发。",
+    "constraints": {}
+  },
+  "fault_injection": {"save_draft": "timeout_after_commit"},
+  "expected": {
+    "status": "completed",
+    "draft_status": "scheduled_draft",
+    "draft_publish_at": "2026-11-13 09:00",
+    "tools_include": ["save_draft"]
+  }
+}
