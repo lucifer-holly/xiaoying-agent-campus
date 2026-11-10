@@ -1,12 +1,13 @@
 {
   "trace_format": "q1-trace/v1",
-  "run_id": "82f2afe1ebdc",
+  "run_id": "457f8fad1cd7",
   "case_id": "01-normal-free-slot",
   "llm_mode": "real",
   "model": "qwen3.8-max",
   "prompt_version": "q1-v2",
-  "started_at": "2026-11-10T21:53:08+08:00",
-  "finished_at": "2026-11-10T21:53:19+08:00",
+  "tools_version": "3d79ca5ea1",
+  "started_at": "2026-11-10T22:25:59+08:00",
+  "finished_at": "2026-11-10T22:26:08+08:00",
   "limits": {
     "max_steps": 8,
     "max_tool_calls": 10
@@ -30,7 +31,7 @@
       "args": {
         "asset_id": "M01"
       },
-      "decision_note": "先读取素材详情，确认必填信息是否齐全，再决定能否继续排期流程。",
+      "decision_note": "先读取素材详情，确认必填信息是否齐全，再决定后续规则检查与排期。",
       "ok": true,
       "result_summary": "M01《冬季轻暖羽绒服上新｜30 秒看懂三种通勤穿搭》video；30 秒；必填齐全；音乐授权 licensed",
       "next_action": "check_rules",
@@ -63,9 +64,9 @@
         }
       },
       "llm": {
-        "latency_ms": 1891,
-        "prompt_tokens": 2234,
-        "completion_tokens": 59
+        "latency_ms": 1477,
+        "prompt_tokens": 2246,
+        "completion_tokens": 60
       }
     },
     {
@@ -99,8 +100,8 @@
         }
       },
       "llm": {
-        "latency_ms": 1836,
-        "prompt_tokens": 2503,
+        "latency_ms": 1579,
+        "prompt_tokens": 2516,
         "completion_tokens": 71
       }
     },
@@ -131,8 +132,8 @@
         }
       },
       "llm": {
-        "latency_ms": 1838,
-        "prompt_tokens": 2675,
+        "latency_ms": 1842,
+        "prompt_tokens": 2688,
         "completion_tokens": 101
       }
     },
@@ -145,7 +146,7 @@
         "publish_at": "2026-11-13 18:00",
         "requires_confirmation": false
       },
-      "decision_note": "申请时段空闲且日期固定，按申请时间直接保存排期草稿。",
+      "decision_note": "申请时段空闲且与申请时间一致，直接保存排期草稿。",
       "ok": true,
       "result_summary": "草稿 D-9C79257D 新建，状态 scheduled_draft，2026-11-13 18:00",
       "next_action": "finish",
@@ -167,15 +168,15 @@
             "change_reason": null,
             "rule_verdict": "pass",
             "warnings": [],
-            "created_at": "2026-11-10T21:53:16+08:00"
+            "created_at": "2026-11-10T22:26:06+08:00"
           },
           "message": "草稿已保存（未发布）"
         }
       },
       "llm": {
-        "latency_ms": 1840,
-        "prompt_tokens": 2852,
-        "completion_tokens": 111
+        "latency_ms": 2351,
+        "prompt_tokens": 2865,
+        "completion_tokens": 110
       }
     },
     {
@@ -183,11 +184,11 @@
       "tool": "finish",
       "args": {
         "status": "completed",
-        "message": "已按申请为素材 M01 在抖音 2026-11-13 18:00 保存排期草稿 D-9C79257D，规则检查通过、时段空闲。草稿仅占位未发布，请在发布系统人工确认后才会正式发布。",
+        "message": "已按申请将素材 M01 排入抖音 2026-11-13 18:00，草稿编号 D-9C79257D。规则检查通过、时段空闲，无需调整。请在发布系统确认后即可正式发布。",
         "draft_id": "D-9C79257D",
         "publish_at": "2026-11-13 18:00"
       },
-      "decision_note": "草稿已成功保存，流程完成，提交最终结果。",
+      "decision_note": "草稿保存成功且与申请一致，提交完成结果。",
       "ok": true,
       "result_summary": "模型提交 status=completed；校验后 status=completed（无更正）",
       "next_action": "结束",
@@ -196,9 +197,9 @@
         "corrections": []
       },
       "llm": {
-        "latency_ms": 2967,
-        "prompt_tokens": 3252,
-        "completion_tokens": 173
+        "latency_ms": 2459,
+        "prompt_tokens": 3264,
+        "completion_tokens": 168
       }
     }
   ],
@@ -207,7 +208,8 @@
     "request_id": "REQ-1113-001",
     "status": "completed",
     "status_label": "已保存排期草稿",
-    "message": "已按申请为素材 M01 在抖音 2026-11-13 18:00 保存排期草稿 D-9C79257D，规则检查通过、时段空闲。草稿仅占位未发布，请在发布系统人工确认后才会正式发布。",
+    "message": "已按申请将素材 M01 排入抖音 2026-11-13 18:00，草稿编号 D-9C79257D。规则检查通过、时段空闲，无需调整。请在发布系统确认后即可正式发布。",
+    "facts_summary": "系统核对：草稿库中有本申请的排期草稿 D-9C79257D（抖音 2026-11-13 18:00），本次新建；没有发布任何内容。",
     "draft": {
       "draft_id": "D-9C79257D",
       "status": "scheduled_draft",
@@ -218,7 +220,7 @@
       "requested_publish_at": "2026-11-13 18:00",
       "change_reason": null,
       "warnings": [],
-      "created_at": "2026-11-10T21:53:16+08:00",
+      "created_at": "2026-11-10T22:26:06+08:00",
       "created_in_this_run": true
     },
     "schedule": {
@@ -244,6 +246,7 @@
       "llm_mode": "real",
       "model": "qwen3.8-max",
       "prompt_version": "q1-v2",
+      "tools_version": "3d79ca5ea1",
       "steps_used": 5,
       "tool_calls_used": 5,
       "max_steps": 8,
@@ -253,8 +256,8 @@
   },
   "llm_usage": {
     "calls": 5,
-    "prompt_tokens": 13516,
-    "completion_tokens": 515,
-    "latency_ms": 10372
+    "prompt_tokens": 13579,
+    "completion_tokens": 510,
+    "latency_ms": 9708
   }
 }

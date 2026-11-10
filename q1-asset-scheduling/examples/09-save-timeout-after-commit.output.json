@@ -2,7 +2,8 @@
   "request_id": "REQ-1113-005",
   "status": "completed",
   "status_label": "已保存排期草稿",
-  "message": "已按申请将素材 M05 排入小红书 2026-11-13 09:00，草稿编号 D-862480F4。规则检查通过、时段空闲，无需额外确认；请在发布系统中人工确认后发布。",
+  "message": "已为素材 M05 在小红书 2026-11-13 09:00 保存排期草稿（D-862480F4）。规则检查通过，申请时段空闲；本次重试确认草稿已写入，未新建。请在发布系统人工确认后发布。",
+  "facts_summary": "系统核对：草稿库中有本申请的排期草稿 D-862480F4（小红书 2026-11-13 09:00），本次新建；没有发布任何内容。",
   "draft": {
     "draft_id": "D-862480F4",
     "status": "scheduled_draft",
@@ -13,7 +14,7 @@
     "requested_publish_at": "2026-11-13 09:00",
     "change_reason": null,
     "warnings": [],
-    "created_at": "2026-11-10T21:54:44+08:00",
+    "created_at": "2026-11-10T22:27:30+08:00",
     "created_in_this_run": true
   },
   "schedule": {
@@ -39,6 +40,7 @@
     "llm_mode": "real",
     "model": "qwen3.8-max",
     "prompt_version": "q1-v2",
+    "tools_version": "3d79ca5ea1",
     "steps_used": 6,
     "tool_calls_used": 6,
     "max_steps": 8,

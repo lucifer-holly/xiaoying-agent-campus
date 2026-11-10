@@ -105,8 +105,8 @@ def test_save_is_idempotent_and_one_draft_per_request(make_session, store):
     first, second = save(s, "2026-11-13 18:00")["data"], save(s, "2026-11-13 18:00")["data"]
     assert first["created"] is True and second["created"] is False
     assert first["draft"]["draft_id"] == second["draft"]["draft_id"]
-    other = save(s, "2026-11-13 19:00", requires_confirmation=True)
-    assert other["error"]["code"] == "REQUEST_ALREADY_HAS_DRAFT"
+    other = save(s, "2026-11-13 19:00", requires_confirmation=True)["data"]  # 同一申请换个时段再存：仍是那一份
+    assert other["created"] is False and other["draft"]["publish_at"] == "2026-11-13 18:00"
     assert len(store.drafts()) == 1
 
 

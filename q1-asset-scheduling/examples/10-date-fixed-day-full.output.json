@@ -1,0 +1,38 @@
+{
+  "request_id": "REQ-1115-001",
+  "status": "needs_confirmation",
+  "status_label": "等待申请人确认",
+  "message": "素材M01规则检查已通过，但申请日期2026-11-15视频号六个时段均已被占用，且备注与constraints明确日期不能改，无法在当天安排排期。请确认是否可以调整到其他日期；如同意换日期，请告知可用日期后我再为您保存草稿。",
+  "facts_summary": "系统核对：草稿库中没有本申请的草稿，也没有发布任何内容。",
+  "draft": null,
+  "schedule": {
+    "requested_publish_at": "2026-11-15 18:00",
+    "draft_publish_at": null,
+    "changed": false
+  },
+  "review": {
+    "verdict": "pass",
+    "deep_check": false,
+    "findings": [],
+    "resolved": []
+  },
+  "missing_fields": [],
+  "risk_rule_ids": [],
+  "confirmation_question": "2026-11-15当天已无空闲时段且日期不可更改，是否允许将排期调整到其他日期？",
+  "notice": "本 Agent 只保存排期草稿，没有发布能力；草稿需要人工在发布系统确认后才会发布。",
+  "validator": {
+    "corrections": [],
+    "warnings": []
+  },
+  "run": {
+    "llm_mode": "real",
+    "model": "qwen3.8-max",
+    "prompt_version": "q1-v2",
+    "tools_version": "3d79ca5ea1",
+    "steps_used": 5,
+    "tool_calls_used": 5,
+    "max_steps": 8,
+    "max_tool_calls": 10,
+    "end_reason": "finish"
+  }
+}

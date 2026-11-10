@@ -1,12 +1,13 @@
 {
   "trace_format": "q1-trace/v1",
-  "run_id": "6b7064b2f21d",
+  "run_id": "c820e0c34394",
   "case_id": "05-rule-needs-verification",
   "llm_mode": "real",
   "model": "qwen3.8-max",
   "prompt_version": "q1-v2",
-  "started_at": "2026-11-10T21:53:43+08:00",
-  "finished_at": "2026-11-10T21:53:54+08:00",
+  "tools_version": "3d79ca5ea1",
+  "started_at": "2026-11-10T22:26:31+08:00",
+  "finished_at": "2026-11-10T22:26:43+08:00",
   "limits": {
     "max_steps": 8,
     "max_tool_calls": 10
@@ -28,7 +29,7 @@
       "args": {
         "asset_id": "M04"
       },
-      "decision_note": "先读取素材 M04 的详情，确认必填信息是否齐全，再决定后续规则检查与排期。",
+      "decision_note": "先读取素材详情，确认必填信息是否齐全，再决定后续规则检查与排期。",
       "ok": true,
       "result_summary": "M04《新款降噪耳机开箱：续航、降噪、佩戴一次说清》video；45 秒；必填齐全；音乐授权 pending",
       "next_action": "check_rules",
@@ -60,9 +61,9 @@
         }
       },
       "llm": {
-        "latency_ms": 1274,
-        "prompt_tokens": 2223,
-        "completion_tokens": 65
+        "latency_ms": 1429,
+        "prompt_tokens": 2235,
+        "completion_tokens": 60
       }
     },
     {
@@ -72,7 +73,7 @@
         "asset_id": "M04",
         "channel": "wechat_channels"
       },
-      "decision_note": "素材信息完整，进行视频号渠道规则检查；注意到音乐授权状态为 pending，可能需要补查。",
+      "decision_note": "素材信息完整，进行视频号渠道规则检查；音乐授权状态为 pending，可能需要补查。",
       "ok": true,
       "result_summary": "verdict=needs_verification；R03[verify] 背景音乐《Neon Drive》在素材库中的授权状态为审批中（LIC-2026-0415），需要补查版权库确认",
       "next_action": "check_rules",
@@ -104,9 +105,9 @@
         }
       },
       "llm": {
-        "latency_ms": 1850,
-        "prompt_tokens": 2495,
-        "completion_tokens": 75
+        "latency_ms": 1843,
+        "prompt_tokens": 2502,
+        "completion_tokens": 74
       }
     },
     {
@@ -147,8 +148,8 @@
         }
       },
       "llm": {
-        "latency_ms": 1583,
-        "prompt_tokens": 2752,
+        "latency_ms": 1845,
+        "prompt_tokens": 2758,
         "completion_tokens": 84
       }
     },
@@ -160,7 +161,7 @@
         "date": "2026-11-13",
         "time": "12:00"
       },
-      "decision_note": "规则检查已通过，查询申请时段 2026-11-13 12:00 在视频号是否空闲。",
+      "decision_note": "规则检查已通过，查询申请时段 2026-11-13 12:00 是否空闲以决定排期。",
       "ok": true,
       "result_summary": "视频号 2026-11-13 12:00：free",
       "next_action": "save_draft",
@@ -179,9 +180,9 @@
         }
       },
       "llm": {
-        "latency_ms": 1946,
-        "prompt_tokens": 2992,
-        "completion_tokens": 103
+        "latency_ms": 1939,
+        "prompt_tokens": 2998,
+        "completion_tokens": 105
       }
     },
     {
@@ -193,7 +194,7 @@
         "publish_at": "2026-11-13 12:00",
         "requires_confirmation": false
       },
-      "decision_note": "申请时段空闲且规则检查通过，按申请时间保存排期草稿，无需申请人确认。",
+      "decision_note": "申请时段空闲且规则检查通过，按申请时间保存排期草稿。",
       "ok": true,
       "result_summary": "草稿 D-927C3EB2 新建，状态 scheduled_draft，2026-11-13 12:00",
       "next_action": "finish",
@@ -215,15 +216,15 @@
             "change_reason": null,
             "rule_verdict": "pass",
             "warnings": [],
-            "created_at": "2026-11-10T21:53:51+08:00"
+            "created_at": "2026-11-10T22:26:41+08:00"
           },
           "message": "草稿已保存（未发布）"
         }
       },
       "llm": {
-        "latency_ms": 2044,
-        "prompt_tokens": 3171,
-        "completion_tokens": 115
+        "latency_ms": 2250,
+        "prompt_tokens": 3179,
+        "completion_tokens": 111
       }
     },
     {
@@ -231,11 +232,11 @@
       "tool": "finish",
       "args": {
         "status": "completed",
-        "message": "已为素材 M04 在视频号 2026-11-13 12:00 保存排期草稿（D-927C3EB2）。规则检查已通过，音乐授权经版权库确认有效。草稿需在发布系统中人工确认后才会正式发布。",
+        "message": "已为素材 M04 在视频号保存排期草稿 D-927C3EB2，发布时间为 2026-11-13 12:00。规则检查已通过（音乐授权经版权库确认有效），申请时段空闲，无需调整。请在发布系统中确认该草稿以完成发布。",
         "draft_id": "D-927C3EB2",
         "publish_at": "2026-11-13 12:00"
       },
-      "decision_note": "草稿已成功保存且与申请时间一致，流程完成，提交结果。",
+      "decision_note": "草稿已成功保存且与申请一致，提交完成结果。",
       "ok": true,
       "result_summary": "模型提交 status=completed；校验后 status=completed（无更正）",
       "next_action": "结束",
@@ -244,9 +245,9 @@
         "corrections": []
       },
       "llm": {
-        "latency_ms": 2865,
-        "prompt_tokens": 3573,
-        "completion_tokens": 173
+        "latency_ms": 2663,
+        "prompt_tokens": 3577,
+        "completion_tokens": 179
       }
     }
   ],
@@ -255,7 +256,8 @@
     "request_id": "REQ-1113-004",
     "status": "completed",
     "status_label": "已保存排期草稿",
-    "message": "已为素材 M04 在视频号 2026-11-13 12:00 保存排期草稿（D-927C3EB2）。规则检查已通过，音乐授权经版权库确认有效。草稿需在发布系统中人工确认后才会正式发布。",
+    "message": "已为素材 M04 在视频号保存排期草稿 D-927C3EB2，发布时间为 2026-11-13 12:00。规则检查已通过（音乐授权经版权库确认有效），申请时段空闲，无需调整。请在发布系统中确认该草稿以完成发布。",
+    "facts_summary": "系统核对：草稿库中有本申请的排期草稿 D-927C3EB2（视频号 2026-11-13 12:00），本次新建；没有发布任何内容。",
     "draft": {
       "draft_id": "D-927C3EB2",
       "status": "scheduled_draft",
@@ -266,7 +268,7 @@
       "requested_publish_at": "2026-11-13 12:00",
       "change_reason": null,
       "warnings": [],
-      "created_at": "2026-11-10T21:53:51+08:00",
+      "created_at": "2026-11-10T22:26:41+08:00",
       "created_in_this_run": true
     },
     "schedule": {
@@ -298,6 +300,7 @@
       "llm_mode": "real",
       "model": "qwen3.8-max",
       "prompt_version": "q1-v2",
+      "tools_version": "3d79ca5ea1",
       "steps_used": 6,
       "tool_calls_used": 6,
       "max_steps": 8,
@@ -307,8 +310,8 @@
   },
   "llm_usage": {
     "calls": 6,
-    "prompt_tokens": 17206,
-    "completion_tokens": 615,
-    "latency_ms": 11562
+    "prompt_tokens": 17249,
+    "completion_tokens": 613,
+    "latency_ms": 11969
   }
 }

@@ -24,7 +24,8 @@ def _now() -> str:
 
 
 class Trace:
-    def __init__(self, *, case_id: str | None, llm_mode: str, model: str, prompt_version: str, limits: dict, request: dict, fault_injection: dict):
+    def __init__(self, *, case_id: str | None, llm_mode: str, model: str, prompt_version: str, tools_version: str,
+                 limits: dict, request: dict, fault_injection: dict):
         self.data = {
             "trace_format": "q1-trace/v1",
             "run_id": uuid.uuid4().hex[:12],
@@ -32,6 +33,7 @@ class Trace:
             "llm_mode": llm_mode,
             "model": model,
             "prompt_version": prompt_version,
+            "tools_version": tools_version,
             "started_at": _now(),
             "finished_at": None,
             "limits": limits,

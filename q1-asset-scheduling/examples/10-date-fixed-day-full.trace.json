@@ -1,0 +1,295 @@
+{
+  "trace_format": "q1-trace/v1",
+  "run_id": "8813b0455a19",
+  "case_id": "10-date-fixed-day-full",
+  "llm_mode": "real",
+  "model": "qwen3.8-max",
+  "prompt_version": "q1-v2",
+  "tools_version": "3d79ca5ea1",
+  "started_at": "2026-11-10T22:27:35+08:00",
+  "finished_at": "2026-11-10T22:27:47+08:00",
+  "limits": {
+    "max_steps": 8,
+    "max_tool_calls": 10
+  },
+  "request": {
+    "request_id": "REQ-1115-001",
+    "asset_id": "M01",
+    "channel": "wechat_channels",
+    "publish_at": "2026-11-15 18:00",
+    "requester": "运营·周宁",
+    "note": "配合周日品牌日，日期不能改。",
+    "constraints": {
+      "date_fixed": true
+    }
+  },
+  "fault_injection": {},
+  "steps": [
+    {
+      "step": 1,
+      "tool": "read_asset",
+      "args": {
+        "asset_id": "M01"
+      },
+      "decision_note": "先读取素材详情，确认必填信息是否齐全，再决定后续规则检查与排期。",
+      "ok": true,
+      "result_summary": "M01《冬季轻暖羽绒服上新｜30 秒看懂三种通勤穿搭》video；30 秒；必填齐全；音乐授权 licensed",
+      "next_action": "check_rules",
+      "observation": {
+        "ok": true,
+        "data": {
+          "asset": {
+            "asset_id": "M01",
+            "title": "冬季轻暖羽绒服上新｜30 秒看懂三种通勤穿搭",
+            "type": "video",
+            "duration_sec": 30,
+            "caption": "今冬轻暖羽绒服上新，三种通勤穿搭一次看懂。#冬季穿搭 #通勤",
+            "cover_url": "https://assets.example.com/m01/cover-v3.jpg",
+            "tags": [
+              "冬季穿搭",
+              "羽绒服"
+            ],
+            "music": {
+              "track": "Morning Walk",
+              "license_id": "LIC-2026-0311",
+              "license_status": "licensed"
+            },
+            "owner": "内容组·林悦",
+            "version": 3,
+            "updated_at": "2026-11-09 16:20"
+          },
+          "missing_fields": [],
+          "missing_labels": [],
+          "complete": true
+        }
+      },
+      "llm": {
+        "latency_ms": 1533,
+        "prompt_tokens": 2246,
+        "completion_tokens": 60
+      }
+    },
+    {
+      "step": 2,
+      "tool": "check_rules",
+      "args": {
+        "asset_id": "M01",
+        "channel": "wechat_channels"
+      },
+      "decision_note": "素材信息完整，按视频号渠道做规则检查，确认是否可排期。",
+      "ok": true,
+      "result_summary": "verdict=pass；全部规则通过",
+      "next_action": "query_slots",
+      "observation": {
+        "ok": true,
+        "data": {
+          "asset_id": "M01",
+          "asset_version": 3,
+          "channel": "wechat_channels",
+          "deep_check": false,
+          "verdict": "pass",
+          "findings": [],
+          "resolved": [],
+          "checked_rules": [
+            "R01",
+            "R02",
+            "R03",
+            "R04",
+            "R05"
+          ]
+        }
+      },
+      "llm": {
+        "latency_ms": 2048,
+        "prompt_tokens": 2516,
+        "completion_tokens": 71
+      }
+    },
+    {
+      "step": 3,
+      "tool": "query_slots",
+      "args": {
+        "channel": "wechat_channels",
+        "date": "2026-11-15",
+        "time": "18:00"
+      },
+      "decision_note": "规则检查通过，查询申请时段18:00是否空闲以决定是否直接排期。",
+      "ok": true,
+      "result_summary": "视频号 2026-11-15 18:00：occupied（M33 周日品牌日专题 3）",
+      "next_action": "query_slots",
+      "observation": {
+        "ok": true,
+        "data": {
+          "channel": "wechat_channels",
+          "channel_name": "视频号",
+          "date": "2026-11-15",
+          "slots": [
+            {
+              "time": "18:00",
+              "status": "occupied",
+              "occupied_by": {
+                "type": "booking",
+                "asset_id": "M33",
+                "title": "周日品牌日专题 3"
+              }
+            }
+          ]
+        }
+      },
+      "llm": {
+        "latency_ms": 1841,
+        "prompt_tokens": 2688,
+        "completion_tokens": 93
+      }
+    },
+    {
+      "step": 4,
+      "tool": "query_slots",
+      "args": {
+        "channel": "wechat_channels",
+        "date": "2026-11-15"
+      },
+      "decision_note": "申请时段18:00被占用且日期不能改，需查询当天所有时段以寻找最近空闲时段作为备选。",
+      "ok": true,
+      "result_summary": "视频号 2026-11-15 空闲：无；占用：09:00、12:00、18:00、19:00、20:00、21:00",
+      "next_action": "finish",
+      "observation": {
+        "ok": true,
+        "data": {
+          "channel": "wechat_channels",
+          "channel_name": "视频号",
+          "date": "2026-11-15",
+          "slots": [
+            {
+              "time": "09:00",
+              "status": "occupied",
+              "occupied_by": {
+                "type": "booking",
+                "asset_id": "M31",
+                "title": "周日品牌日专题 1"
+              }
+            },
+            {
+              "time": "12:00",
+              "status": "occupied",
+              "occupied_by": {
+                "type": "booking",
+                "asset_id": "M32",
+                "title": "周日品牌日专题 2"
+              }
+            },
+            {
+              "time": "18:00",
+              "status": "occupied",
+              "occupied_by": {
+                "type": "booking",
+                "asset_id": "M33",
+                "title": "周日品牌日专题 3"
+              }
+            },
+            {
+              "time": "19:00",
+              "status": "occupied",
+              "occupied_by": {
+                "type": "booking",
+                "asset_id": "M34",
+                "title": "周日品牌日专题 4"
+              }
+            },
+            {
+              "time": "20:00",
+              "status": "occupied",
+              "occupied_by": {
+                "type": "booking",
+                "asset_id": "M35",
+                "title": "周日品牌日专题 5"
+              }
+            },
+            {
+              "time": "21:00",
+              "status": "occupied",
+              "occupied_by": {
+                "type": "booking",
+                "asset_id": "M36",
+                "title": "周日品牌日专题 6"
+              }
+            }
+          ],
+          "free_slots": []
+        }
+      },
+      "llm": {
+        "latency_ms": 2970,
+        "prompt_tokens": 2887,
+        "completion_tokens": 85
+      }
+    },
+    {
+      "step": 5,
+      "tool": "finish",
+      "args": {
+        "status": "needs_confirmation",
+        "message": "素材M01规则检查已通过，但申请日期2026-11-15视频号六个时段均已被占用，且备注与constraints明确日期不能改，无法在当天安排排期。请确认是否可以调整到其他日期；如同意换日期，请告知可用日期后我再为您保存草稿。",
+        "confirmation_question": "2026-11-15当天已无空闲时段且日期不可更改，是否允许将排期调整到其他日期？"
+      },
+      "decision_note": "当天无空闲时段且date_fixed=true，不能擅自改期或保存其他日期草稿，需申请人确认是否可换日期。",
+      "ok": true,
+      "result_summary": "模型提交 status=needs_confirmation；校验后 status=needs_confirmation（无更正）",
+      "next_action": "结束",
+      "observation": {
+        "validated_status": "needs_confirmation",
+        "corrections": []
+      },
+      "llm": {
+        "latency_ms": 3580,
+        "prompt_tokens": 3318,
+        "completion_tokens": 180
+      }
+    }
+  ],
+  "end_reason": "finish",
+  "final": {
+    "request_id": "REQ-1115-001",
+    "status": "needs_confirmation",
+    "status_label": "等待申请人确认",
+    "message": "素材M01规则检查已通过，但申请日期2026-11-15视频号六个时段均已被占用，且备注与constraints明确日期不能改，无法在当天安排排期。请确认是否可以调整到其他日期；如同意换日期，请告知可用日期后我再为您保存草稿。",
+    "facts_summary": "系统核对：草稿库中没有本申请的草稿，也没有发布任何内容。",
+    "draft": null,
+    "schedule": {
+      "requested_publish_at": "2026-11-15 18:00",
+      "draft_publish_at": null,
+      "changed": false
+    },
+    "review": {
+      "verdict": "pass",
+      "deep_check": false,
+      "findings": [],
+      "resolved": []
+    },
+    "missing_fields": [],
+    "risk_rule_ids": [],
+    "confirmation_question": "2026-11-15当天已无空闲时段且日期不可更改，是否允许将排期调整到其他日期？",
+    "notice": "本 Agent 只保存排期草稿，没有发布能力；草稿需要人工在发布系统确认后才会发布。",
+    "validator": {
+      "corrections": [],
+      "warnings": []
+    },
+    "run": {
+      "llm_mode": "real",
+      "model": "qwen3.8-max",
+      "prompt_version": "q1-v2",
+      "tools_version": "3d79ca5ea1",
+      "steps_used": 5,
+      "tool_calls_used": 5,
+      "max_steps": 8,
+      "max_tool_calls": 10,
+      "end_reason": "finish"
+    }
+  },
+  "llm_usage": {
+    "calls": 5,
+    "prompt_tokens": 13655,
+    "completion_tokens": 489,
+    "latency_ms": 11972
+  }
+}

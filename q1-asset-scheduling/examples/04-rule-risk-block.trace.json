@@ -1,12 +1,13 @@
 {
   "trace_format": "q1-trace/v1",
-  "run_id": "5582ff740352",
+  "run_id": "6df21f76036a",
   "case_id": "04-rule-risk-block",
   "llm_mode": "real",
   "model": "qwen3.8-max",
   "prompt_version": "q1-v2",
-  "started_at": "2026-11-10T21:53:37+08:00",
-  "finished_at": "2026-11-10T21:53:43+08:00",
+  "tools_version": "3d79ca5ea1",
+  "started_at": "2026-11-10T22:26:25+08:00",
+  "finished_at": "2026-11-10T22:26:31+08:00",
   "limits": {
     "max_steps": 8,
     "max_tool_calls": 10
@@ -56,8 +57,8 @@
         }
       },
       "llm": {
-        "latency_ms": 1534,
-        "prompt_tokens": 2236,
+        "latency_ms": 2147,
+        "prompt_tokens": 2248,
         "completion_tokens": 65
       }
     },
@@ -105,8 +106,8 @@
         }
       },
       "llm": {
-        "latency_ms": 1637,
-        "prompt_tokens": 2478,
+        "latency_ms": 1641,
+        "prompt_tokens": 2490,
         "completion_tokens": 74
       }
     },
@@ -120,7 +121,7 @@
           "R02"
         ]
       },
-      "decision_note": "规则检查 verdict=block，按规范不得排期，直接以 blocked 状态结束并说明修改建议。",
+      "decision_note": "规则检查 verdict=block，按规范不得排期，直接以 blocked 状态结束并告知修改建议。",
       "ok": true,
       "result_summary": "模型提交 status=blocked；校验后 status=blocked（无更正）",
       "next_action": "结束",
@@ -129,8 +130,8 @@
         "corrections": []
       },
       "llm": {
-        "latency_ms": 2763,
-        "prompt_tokens": 2727,
+        "latency_ms": 2458,
+        "prompt_tokens": 2739,
         "completion_tokens": 149
       }
     }
@@ -141,6 +142,7 @@
     "status": "blocked",
     "status_label": "规则风险，已阻断",
     "message": "素材 M03 在小红书渠道规则检查未通过，命中 R02「绝对化用语」：文案含“销量第一”“史上最”“最强”等表述，已阻断排期。请删除或改写这些绝对化用语后重新提交审核，再发起排期申请。",
+    "facts_summary": "系统核对：草稿库中没有本申请的草稿，也没有发布任何内容。",
     "draft": null,
     "schedule": {
       "requested_publish_at": "2026-11-13 12:00",
@@ -180,6 +182,7 @@
       "llm_mode": "real",
       "model": "qwen3.8-max",
       "prompt_version": "q1-v2",
+      "tools_version": "3d79ca5ea1",
       "steps_used": 3,
       "tool_calls_used": 3,
       "max_steps": 8,
@@ -189,8 +192,8 @@
   },
   "llm_usage": {
     "calls": 3,
-    "prompt_tokens": 7441,
+    "prompt_tokens": 7477,
     "completion_tokens": 288,
-    "latency_ms": 5934
+    "latency_ms": 6246
   }
 }

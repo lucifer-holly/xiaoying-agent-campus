@@ -20,7 +20,7 @@ class ScriptedMockLLM:
     model = "scripted-mock"
 
     def __init__(self, script: list[dict]):
-        """script 每项：{"tool": 名称, "args": {...}} / {"content": "只回文字"} / {"raise": "模拟模型调用失败"}。"""
+        """script 每项：{"tool": 名称, "args": {...}} / {"tools": [多个工具调用]} / {"content": "只回文字"} / {"raise": "模拟模型调用失败"}。"""
         self._script = list(script)
         self.calls = 0
 
@@ -31,11 +31,15 @@ class ScriptedMockLLM:
         item = self._script.pop(0)
         if "raise" in item:
             raise LLMError(item["raise"])
-        if "tool" not in item:
+        calls = item.get("tools") or ([item] if "tool" in item else [])
+        if not calls:
             return LLMReply(content=item.get("content", ""), model=self.model)
-        args = item.get("args", {})
-        raw = args if isinstance(args, str) else json.dumps(args, ensure_ascii=False)
-        return LLMReply(content="", tool_calls=[ToolCall(id=f"mock_{self.calls}", name=item["tool"], arguments=raw)], model=self.model)
+        tool_calls = []
+        for i, c in enumerate(calls):
+            args = c.get("args", {})
+            raw = args if isinstance(args, str) else json.dumps(args, ensure_ascii=False)
+            tool_calls.append(ToolCall(id=f"mock_{self.calls}_{i}", name=c["tool"], arguments=raw))
+        return LLMReply(content=item.get("content", ""), tool_calls=tool_calls, model=self.model)
 
 
 class _Obs:

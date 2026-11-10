@@ -3,6 +3,7 @@
   "status": "needs_input",
   "status_label": "需要补充信息",
   "message": "素材 M02 缺少必填信息，无法进入排期流程。请补充文案（caption）和封面（cover_url）后重新提交申请。",
+  "facts_summary": "系统核对：草稿库中没有本申请的草稿，也没有发布任何内容。",
   "draft": null,
   "schedule": {
     "requested_publish_at": "2026-11-13 19:00",
@@ -25,6 +26,7 @@
     "llm_mode": "real",
     "model": "qwen3.8-max",
     "prompt_version": "q1-v2",
+    "tools_version": "3d79ca5ea1",
     "steps_used": 2,
     "tool_calls_used": 2,
     "max_steps": 8,

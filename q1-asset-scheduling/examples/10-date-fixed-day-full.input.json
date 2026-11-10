@@ -1,0 +1,29 @@
+{
+  "case": "10-date-fixed-day-full",
+  "title": "日期不能改且当天排满：不擅自改日期，请申请人确认能否换日期",
+  "covers": [
+    "硬性要求未经同意不得更改",
+    "时段冲突（当天无空闲）"
+  ],
+  "request": {
+    "request_id": "REQ-1115-001",
+    "asset_id": "M01",
+    "channel": "wechat_channels",
+    "publish_at": "2026-11-15 18:00",
+    "requester": "运营·周宁",
+    "note": "配合周日品牌日，日期不能改。",
+    "constraints": {
+      "date_fixed": true
+    }
+  },
+  "fault_injection": {},
+  "expected": {
+    "status": "needs_confirmation",
+    "draft": null,
+    "tools_include": [
+      "read_asset",
+      "check_rules",
+      "query_slots"
+    ]
+  }
+}

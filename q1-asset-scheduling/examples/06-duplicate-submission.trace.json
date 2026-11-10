@@ -4,13 +4,14 @@
   "runs": [
     {
       "trace_format": "q1-trace/v1",
-      "run_id": "0973fedee637",
+      "run_id": "0f6669fdd50b",
       "case_id": "06-duplicate-submission",
       "llm_mode": "real",
       "model": "qwen3.8-max",
       "prompt_version": "q1-v2",
-      "started_at": "2026-11-10T21:53:54+08:00",
-      "finished_at": "2026-11-10T21:54:06+08:00",
+      "tools_version": "3d79ca5ea1",
+      "started_at": "2026-11-10T22:26:43+08:00",
+      "finished_at": "2026-11-10T22:26:53+08:00",
       "limits": {
         "max_steps": 8,
         "max_tool_calls": 10
@@ -60,8 +61,8 @@
             }
           },
           "llm": {
-            "latency_ms": 1638,
-            "prompt_tokens": 2226,
+            "latency_ms": 1531,
+            "prompt_tokens": 2238,
             "completion_tokens": 65
           }
         },
@@ -96,8 +97,8 @@
             }
           },
           "llm": {
-            "latency_ms": 2556,
-            "prompt_tokens": 2469,
+            "latency_ms": 1945,
+            "prompt_tokens": 2481,
             "completion_tokens": 74
           }
         },
@@ -128,8 +129,8 @@
             }
           },
           "llm": {
-            "latency_ms": 2868,
-            "prompt_tokens": 2647,
+            "latency_ms": 1847,
+            "prompt_tokens": 2659,
             "completion_tokens": 106
           }
         },
@@ -164,14 +165,14 @@
                 "change_reason": null,
                 "rule_verdict": "pass",
                 "warnings": [],
-                "created_at": "2026-11-10T21:54:04+08:00"
+                "created_at": "2026-11-10T22:26:50+08:00"
               },
               "message": "草稿已保存（未发布）"
             }
           },
           "llm": {
-            "latency_ms": 2358,
-            "prompt_tokens": 2832,
+            "latency_ms": 1957,
+            "prompt_tokens": 2844,
             "completion_tokens": 117
           }
         },
@@ -180,11 +181,11 @@
           "tool": "finish",
           "args": {
             "status": "completed",
-            "message": "已为素材 M06 在小红书保存排期草稿，发布时间为 2026-11-14 12:00，规则检查通过且时段空闲。草稿编号 D-E9348A71，需在发布系统人工确认后才会正式发布。",
+            "message": "已按申请将素材 M06 排入小红书 2026-11-14 12:00，草稿编号 D-E9348A71。规则检查通过、时段空闲，无需额外确认；请在发布系统中人工确认后发布。",
             "draft_id": "D-E9348A71",
             "publish_at": "2026-11-14 12:00"
           },
-          "decision_note": "草稿已成功保存，按申请时间排期完成，提交最终结果。",
+          "decision_note": "草稿已成功保存且与申请一致，提交完成结果。",
           "ok": true,
           "result_summary": "模型提交 status=completed；校验后 status=completed（无更正）",
           "next_action": "结束",
@@ -193,9 +194,9 @@
             "corrections": []
           },
           "llm": {
-            "latency_ms": 2576,
-            "prompt_tokens": 3232,
-            "completion_tokens": 171
+            "latency_ms": 2750,
+            "prompt_tokens": 3244,
+            "completion_tokens": 167
           }
         }
       ],
@@ -204,7 +205,8 @@
         "request_id": "REQ-1114-001",
         "status": "completed",
         "status_label": "已保存排期草稿",
-        "message": "已为素材 M06 在小红书保存排期草稿，发布时间为 2026-11-14 12:00，规则检查通过且时段空闲。草稿编号 D-E9348A71，需在发布系统人工确认后才会正式发布。",
+        "message": "已按申请将素材 M06 排入小红书 2026-11-14 12:00，草稿编号 D-E9348A71。规则检查通过、时段空闲，无需额外确认；请在发布系统中人工确认后发布。",
+        "facts_summary": "系统核对：草稿库中有本申请的排期草稿 D-E9348A71（小红书 2026-11-14 12:00），本次新建；没有发布任何内容。",
         "draft": {
           "draft_id": "D-E9348A71",
           "status": "scheduled_draft",
@@ -215,7 +217,7 @@
           "requested_publish_at": "2026-11-14 12:00",
           "change_reason": null,
           "warnings": [],
-          "created_at": "2026-11-10T21:54:04+08:00",
+          "created_at": "2026-11-10T22:26:50+08:00",
           "created_in_this_run": true
         },
         "schedule": {
@@ -241,6 +243,7 @@
           "llm_mode": "real",
           "model": "qwen3.8-max",
           "prompt_version": "q1-v2",
+          "tools_version": "3d79ca5ea1",
           "steps_used": 5,
           "tool_calls_used": 5,
           "max_steps": 8,
@@ -250,20 +253,21 @@
       },
       "llm_usage": {
         "calls": 5,
-        "prompt_tokens": 13406,
-        "completion_tokens": 533,
-        "latency_ms": 11996
+        "prompt_tokens": 13466,
+        "completion_tokens": 529,
+        "latency_ms": 10030
       }
     },
     {
       "trace_format": "q1-trace/v1",
-      "run_id": "93823a5ae805",
+      "run_id": "c77cd0164c54",
       "case_id": "06-duplicate-submission",
       "llm_mode": "real",
       "model": "qwen3.8-max",
       "prompt_version": "q1-v2",
-      "started_at": "2026-11-10T21:54:06+08:00",
-      "finished_at": "2026-11-10T21:54:18+08:00",
+      "tools_version": "3d79ca5ea1",
+      "started_at": "2026-11-10T22:26:53+08:00",
+      "finished_at": "2026-11-10T22:27:04+08:00",
       "limits": {
         "max_steps": 8,
         "max_tool_calls": 10
@@ -313,8 +317,8 @@
             }
           },
           "llm": {
-            "latency_ms": 1622,
-            "prompt_tokens": 2226,
+            "latency_ms": 1635,
+            "prompt_tokens": 2238,
             "completion_tokens": 65
           }
         },
@@ -349,8 +353,8 @@
             }
           },
           "llm": {
-            "latency_ms": 1546,
-            "prompt_tokens": 2469,
+            "latency_ms": 1549,
+            "prompt_tokens": 2481,
             "completion_tokens": 74
           }
         },
@@ -362,7 +366,7 @@
             "date": "2026-11-14",
             "time": "12:00"
           },
-          "decision_note": "规则检查通过，查询申请时段 2026-11-14 12:00 在小红书是否空闲。",
+          "decision_note": "规则检查通过，查询申请时段 2026-11-14 12:00 是否空闲以决定排期。",
           "ok": true,
           "result_summary": "小红书 2026-11-14 12:00：occupied（M06 D-E9348A71）",
           "next_action": "save_draft",
@@ -388,9 +392,9 @@
             }
           },
           "llm": {
-            "latency_ms": 2442,
-            "prompt_tokens": 2647,
-            "completion_tokens": 106
+            "latency_ms": 2139,
+            "prompt_tokens": 2659,
+            "completion_tokens": 108
           }
         },
         {
@@ -402,7 +406,7 @@
             "publish_at": "2026-11-14 12:00",
             "requires_confirmation": false
           },
-          "decision_note": "申请时段已被同一素材的草稿占用，幂等保存以确认已有草稿并获取草稿编号。",
+          "decision_note": "申请时段已被同一素材的草稿 D-E9348A71 占用，按幂等规则重新保存以确认已有草稿。",
           "ok": true,
           "result_summary": "草稿 D-E9348A71 已存在（重复提交，未新建），状态 scheduled_draft，2026-11-14 12:00",
           "next_action": "finish",
@@ -424,16 +428,16 @@
                 "change_reason": null,
                 "rule_verdict": "pass",
                 "warnings": [],
-                "created_at": "2026-11-10T21:54:04+08:00"
+                "created_at": "2026-11-10T22:26:50+08:00"
               },
               "written_earlier_in_this_run": false,
-              "message": "相同内容的草稿之前已经提交过（重复提交），没有新建草稿"
+              "message": "同一申请内容的草稿之前已经提交过（重复提交），没有新建草稿"
             }
           },
           "llm": {
-            "latency_ms": 2152,
-            "prompt_tokens": 2890,
-            "completion_tokens": 119
+            "latency_ms": 2968,
+            "prompt_tokens": 2904,
+            "completion_tokens": 128
           }
         },
         {
@@ -441,7 +445,7 @@
           "tool": "finish",
           "args": {
             "status": "completed",
-            "message": "素材 M06 已通过小红书规则检查，申请时段 2026-11-14 12:00 已有对应草稿 D-E9348A71，本次为重复提交未新建草稿。排期已就绪，请在发布系统人工确认后发布。",
+            "message": "素材 M06 已通过小红书规则检查，申请时段 2026-11-14 12:00 的排期草稿 D-E9348A71 此前已保存，本次为重复提交未新建草稿。请在发布系统中确认该草稿以完成发布。",
             "draft_id": "D-E9348A71",
             "publish_at": "2026-11-14 12:00"
           },
@@ -454,9 +458,9 @@
             "corrections": []
           },
           "llm": {
-            "latency_ms": 4090,
-            "prompt_tokens": 3310,
-            "completion_tokens": 177
+            "latency_ms": 2768,
+            "prompt_tokens": 3334,
+            "completion_tokens": 180
           }
         }
       ],
@@ -465,7 +469,8 @@
         "request_id": "REQ-1114-001",
         "status": "completed",
         "status_label": "已保存排期草稿",
-        "message": "素材 M06 已通过小红书规则检查，申请时段 2026-11-14 12:00 已有对应草稿 D-E9348A71，本次为重复提交未新建草稿。排期已就绪，请在发布系统人工确认后发布。",
+        "message": "素材 M06 已通过小红书规则检查，申请时段 2026-11-14 12:00 的排期草稿 D-E9348A71 此前已保存，本次为重复提交未新建草稿。请在发布系统中确认该草稿以完成发布。",
+        "facts_summary": "系统核对：草稿库中有本申请的排期草稿 D-E9348A71（小红书 2026-11-14 12:00），此前已存在、本次没有新建；没有发布任何内容。",
         "draft": {
           "draft_id": "D-E9348A71",
           "status": "scheduled_draft",
@@ -476,7 +481,7 @@
           "requested_publish_at": "2026-11-14 12:00",
           "change_reason": null,
           "warnings": [],
-          "created_at": "2026-11-10T21:54:04+08:00",
+          "created_at": "2026-11-10T22:26:50+08:00",
           "created_in_this_run": false
         },
         "schedule": {
@@ -502,6 +507,7 @@
           "llm_mode": "real",
           "model": "qwen3.8-max",
           "prompt_version": "q1-v2",
+          "tools_version": "3d79ca5ea1",
           "steps_used": 5,
           "tool_calls_used": 5,
           "max_steps": 8,
@@ -511,9 +517,9 @@
       },
       "llm_usage": {
         "calls": 5,
-        "prompt_tokens": 13542,
-        "completion_tokens": 541,
-        "latency_ms": 11852
+        "prompt_tokens": 13616,
+        "completion_tokens": 555,
+        "latency_ms": 11059
       }
     }
   ]

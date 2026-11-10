@@ -3,6 +3,7 @@
   "status": "failed",
   "status_label": "未完成（失败）",
   "message": "素材 M05 信息完整且抖音规则检查通过，申请时段 2026-11-14 19:00 也空闲，但保存排期草稿时草稿库写入失败（STORAGE_UNAVAILABLE），已按规则重试一次仍失败，本次未生成草稿。请稍后重新提交该排期申请或联系系统运维确认存储服务恢复后再试。",
+  "facts_summary": "系统核对：草稿库中没有本申请的草稿，也没有发布任何内容。最后一次保存返回 STORAGE_UNAVAILABLE：草稿库写入失败：存储服务暂时不可用（503），本次没有写入。",
   "draft": null,
   "schedule": {
     "requested_publish_at": "2026-11-14 19:00",
@@ -27,6 +28,7 @@
     "llm_mode": "real",
     "model": "qwen3.8-max",
     "prompt_version": "q1-v2",
+    "tools_version": "3d79ca5ea1",
     "steps_used": 6,
     "tool_calls_used": 6,
     "max_steps": 8,

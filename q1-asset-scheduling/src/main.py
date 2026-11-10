@@ -46,9 +46,16 @@ def run_case(case: dict, *, llm, max_steps: int | None = None, max_tool_calls: i
              store: DataStore | None = None, repeat: int | None = None) -> tuple[dict, dict]:
     """跑一个用例。repeat>1 时用同一个草稿库连续提交多次（用来验证防重复）。"""
     options = case.get("options") or {}
-    max_steps = max_steps or options.get("max_steps") or DEFAULT_MAX_STEPS
-    max_tool_calls = max_tool_calls or options.get("max_tool_calls") or DEFAULT_MAX_TOOL_CALLS
-    repeat = repeat or options.get("repeat") or 1
+
+    def pick(cli_value, key, default):
+        value = cli_value if cli_value is not None else options.get(key, default)
+        if not isinstance(value, int) or value < 1:
+            raise ValueError(f"{key} 必须是正整数，收到 {value!r}")
+        return value
+
+    max_steps = pick(max_steps, "max_steps", DEFAULT_MAX_STEPS)
+    max_tool_calls = pick(max_tool_calls, "max_tool_calls", DEFAULT_MAX_TOOL_CALLS)
+    repeat = pick(repeat, "repeat", 1)
     store = store or DataStore()
     outputs, traces = [], []
     for _ in range(repeat):
@@ -93,16 +100,23 @@ def print_steps(trace: dict, stream=sys.stderr) -> None:
             print(f"     校验器更正：{c['from']} -> {c['to']}：{c['reason']}", file=stream)
 
 
+def positive_int(text: str) -> int:
+    value = int(text)
+    if value < 1:
+        raise argparse.ArgumentTypeError("必须是正整数")
+    return value
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="素材审核与发布排期 Agent（Q1）")
     parser.add_argument("--input", required=True, help="用例文件（examples/*.input.json）")
     parser.add_argument("--llm", choices=["mock", "real"], default="mock", help="mock=离线参考策略；real=真实模型（需要 LLM_API_KEY）")
-    parser.add_argument("--max-steps", type=int, help=f"步数上限（默认 {DEFAULT_MAX_STEPS}，用例 options 可覆盖）")
-    parser.add_argument("--max-tool-calls", type=int, help=f"工具调用次数上限（默认 {DEFAULT_MAX_TOOL_CALLS}）")
+    parser.add_argument("--max-steps", type=positive_int, help=f"步数上限（默认 {DEFAULT_MAX_STEPS}，用例 options 可覆盖）")
+    parser.add_argument("--max-tool-calls", type=positive_int, help=f"工具调用次数上限（默认 {DEFAULT_MAX_TOOL_CALLS}）")
     parser.add_argument("--trace-out", help="Trace 输出路径（默认 runs/<用例>.<llm>.trace.json）")
     parser.add_argument("--output", help="结果 JSON 输出路径（默认打印到标准输出）")
     parser.add_argument("--store", help="草稿库 JSON 文件；不传则只在内存里（每次运行互不影响）")
-    parser.add_argument("--repeat", type=int, help="同一申请连续提交的次数（共用草稿库，用于验证防重复）")
+    parser.add_argument("--repeat", type=positive_int, help="同一申请连续提交的次数（共用草稿库，用于验证防重复）")
     parser.add_argument("--quiet", action="store_true", help="不在标准错误打印逐步摘要")
     args = parser.parse_args(argv)
 

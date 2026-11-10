@@ -1,12 +1,13 @@
 {
   "trace_format": "q1-trace/v1",
-  "run_id": "83f59b6f935c",
+  "run_id": "dbfc384b2314",
   "case_id": "07-save-failure",
   "llm_mode": "real",
   "model": "qwen3.8-max",
   "prompt_version": "q1-v2",
-  "started_at": "2026-11-10T21:54:18+08:00",
-  "finished_at": "2026-11-10T21:54:31+08:00",
+  "tools_version": "3d79ca5ea1",
+  "started_at": "2026-11-10T22:27:04+08:00",
+  "finished_at": "2026-11-10T22:27:16+08:00",
   "limits": {
     "max_steps": 8,
     "max_tool_calls": 10
@@ -62,8 +63,8 @@
         }
       },
       "llm": {
-        "latency_ms": 1544,
-        "prompt_tokens": 2223,
+        "latency_ms": 1418,
+        "prompt_tokens": 2235,
         "completion_tokens": 65
       }
     },
@@ -98,8 +99,8 @@
         }
       },
       "llm": {
-        "latency_ms": 1936,
-        "prompt_tokens": 2492,
+        "latency_ms": 1541,
+        "prompt_tokens": 2504,
         "completion_tokens": 71
       }
     },
@@ -130,8 +131,8 @@
         }
       },
       "llm": {
-        "latency_ms": 1840,
-        "prompt_tokens": 2664,
+        "latency_ms": 1945,
+        "prompt_tokens": 2676,
         "completion_tokens": 103
       }
     },
@@ -157,8 +158,8 @@
         }
       },
       "llm": {
-        "latency_ms": 2253,
-        "prompt_tokens": 2843,
+        "latency_ms": 1944,
+        "prompt_tokens": 2855,
         "completion_tokens": 114
       }
     },
@@ -171,7 +172,7 @@
         "publish_at": "2026-11-14 19:00",
         "requires_confirmation": false
       },
-      "decision_note": "上次保存因存储服务 503 失败且可重试，按规则重试一次保存草稿。",
+      "decision_note": "上次保存因存储服务暂时不可用失败且可重试，按规则重试一次保存草稿。",
       "ok": false,
       "result_summary": "失败 STORAGE_UNAVAILABLE：草稿库写入失败：存储服务暂时不可用（503），本次没有写入（可重试）",
       "next_action": "finish",
@@ -184,9 +185,9 @@
         }
       },
       "llm": {
-        "latency_ms": 2457,
-        "prompt_tokens": 3020,
-        "completion_tokens": 116
+        "latency_ms": 2149,
+        "prompt_tokens": 3032,
+        "completion_tokens": 114
       }
     },
     {
@@ -196,7 +197,7 @@
         "status": "failed",
         "message": "素材 M05 信息完整且抖音规则检查通过，申请时段 2026-11-14 19:00 也空闲，但保存排期草稿时草稿库写入失败（STORAGE_UNAVAILABLE），已按规则重试一次仍失败，本次未生成草稿。请稍后重新提交该排期申请或联系系统运维确认存储服务恢复后再试。"
       },
-      "decision_note": "save_draft 重试后仍返回可重试的存储错误，未能生成草稿，按规则以 failed 结束并说明失败步骤与草稿状态。",
+      "decision_note": "save_draft 可重试错误重试一次后仍失败，按规范以 failed 结束并说明失败步骤与草稿未保存。",
       "ok": true,
       "result_summary": "模型提交 status=failed；校验后 status=failed（无更正）",
       "next_action": "结束",
@@ -205,9 +206,9 @@
         "corrections": []
       },
       "llm": {
-        "latency_ms": 2873,
-        "prompt_tokens": 3199,
-        "completion_tokens": 160
+        "latency_ms": 2969,
+        "prompt_tokens": 3209,
+        "completion_tokens": 156
       }
     }
   ],
@@ -217,6 +218,7 @@
     "status": "failed",
     "status_label": "未完成（失败）",
     "message": "素材 M05 信息完整且抖音规则检查通过，申请时段 2026-11-14 19:00 也空闲，但保存排期草稿时草稿库写入失败（STORAGE_UNAVAILABLE），已按规则重试一次仍失败，本次未生成草稿。请稍后重新提交该排期申请或联系系统运维确认存储服务恢复后再试。",
+    "facts_summary": "系统核对：草稿库中没有本申请的草稿，也没有发布任何内容。最后一次保存返回 STORAGE_UNAVAILABLE：草稿库写入失败：存储服务暂时不可用（503），本次没有写入。",
     "draft": null,
     "schedule": {
       "requested_publish_at": "2026-11-14 19:00",
@@ -241,6 +243,7 @@
       "llm_mode": "real",
       "model": "qwen3.8-max",
       "prompt_version": "q1-v2",
+      "tools_version": "3d79ca5ea1",
       "steps_used": 6,
       "tool_calls_used": 6,
       "max_steps": 8,
@@ -250,8 +253,8 @@
   },
   "llm_usage": {
     "calls": 6,
-    "prompt_tokens": 16441,
-    "completion_tokens": 629,
-    "latency_ms": 12903
+    "prompt_tokens": 16511,
+    "completion_tokens": 623,
+    "latency_ms": 11966
   }
 }

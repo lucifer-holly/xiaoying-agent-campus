@@ -6,6 +6,7 @@ finish 之后交给校验器（finalize）和事实核对，再决定最终状�
 """
 from __future__ import annotations
 
+import hashlib
 import json
 from dataclasses import dataclass
 from typing import Callable
@@ -16,6 +17,11 @@ from .trace import Trace
 
 DEFAULT_MAX_STEPS = 8
 DEFAULT_MAX_TOOL_CALLS = 10
+
+
+def tools_fingerprint(tools: list[dict]) -> str:
+    """工具定义（名称、描述、参数 Schema）的指纹：模型看到的工具说明变了，录制就要重做。"""
+    return hashlib.sha256(json.dumps(tools, ensure_ascii=False, sort_keys=True).encode("utf-8")).hexdigest()[:10]
 
 
 @dataclass
@@ -29,13 +35,14 @@ def run_agent(*, session, llm, finalize: Callable[..., dict], summarize: Callabl
               case_id: str | None = None) -> AgentResult:
     registry = session.registry
     limits = {"max_steps": max_steps, "max_tool_calls": max_tool_calls}
+    tools = registry.schemas()
+    tools_version = tools_fingerprint(tools)
     trace = Trace(case_id=case_id, llm_mode=llm.mode, model=llm.model, prompt_version=PROMPT_VERSION,
-                  limits=limits, request=session.request, fault_injection=session.fault_injection)
+                  tools_version=tools_version, limits=limits, request=session.request, fault_injection=session.fault_injection)
     messages: list[dict] = [
         {"role": "system", "content": SYSTEM_PROMPT},
         {"role": "user", "content": render_request(session.request)},
     ]
-    tools = registry.schemas()
     end_reason, finish_args, error, finish_step = "step_limit", None, None, None
     step = tool_calls_used = 0
 
@@ -45,6 +52,9 @@ def run_agent(*, session, llm, finalize: Callable[..., dict], summarize: Callabl
             reply = llm.chat(messages, tools)
         except LLMError as exc:
             end_reason, error = "llm_error", str(exc)
+            break
+        except Exception as exc:  # 任何意外都要留下输出和 Trace（例如已经写入的草稿）
+            end_reason, error = "llm_error", f"{type(exc).__name__}: {exc}"
             break
         llm_meta = trace.record_llm(reply.model, reply.latency_ms, reply.usage)
 
@@ -83,7 +93,7 @@ def run_agent(*, session, llm, finalize: Callable[..., dict], summarize: Callabl
         if done:
             break
 
-    run = {"llm_mode": llm.mode, "model": llm.model, "prompt_version": PROMPT_VERSION,
+    run = {"llm_mode": llm.mode, "model": llm.model, "prompt_version": PROMPT_VERSION, "tools_version": tools_version,
            "steps_used": step, "tool_calls_used": tool_calls_used, **limits, "end_reason": end_reason}
     output = finalize(session=session, finish_args=finish_args, end_reason=end_reason, run=run, error=error)
 

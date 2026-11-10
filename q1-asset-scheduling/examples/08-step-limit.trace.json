@@ -1,12 +1,13 @@
 {
   "trace_format": "q1-trace/v1",
-  "run_id": "7fc45940c108",
+  "run_id": "fea4d6786432",
   "case_id": "08-step-limit",
   "llm_mode": "real",
   "model": "qwen3.8-max",
   "prompt_version": "q1-v2",
-  "started_at": "2026-11-10T21:54:31+08:00",
-  "finished_at": "2026-11-10T21:54:36+08:00",
+  "tools_version": "3d79ca5ea1",
+  "started_at": "2026-11-10T22:27:16+08:00",
+  "finished_at": "2026-11-10T22:27:22+08:00",
   "limits": {
     "max_steps": 3,
     "max_tool_calls": 10
@@ -30,7 +31,7 @@
       "args": {
         "asset_id": "M01"
       },
-      "decision_note": "先读取素材详情，确认必填信息是否齐全，再决定后续流程。",
+      "decision_note": "先读取素材详情，确认必填信息是否齐全，再决定能否继续排期流程。",
       "ok": true,
       "result_summary": "M01《冬季轻暖羽绒服上新｜30 秒看懂三种通勤穿搭》video；30 秒；必填齐全；音乐授权 licensed",
       "next_action": "check_rules",
@@ -63,9 +64,9 @@
         }
       },
       "llm": {
-        "latency_ms": 1527,
-        "prompt_tokens": 2234,
-        "completion_tokens": 56
+        "latency_ms": 1534,
+        "prompt_tokens": 2246,
+        "completion_tokens": 59
       }
     },
     {
@@ -99,8 +100,8 @@
         }
       },
       "llm": {
-        "latency_ms": 1845,
-        "prompt_tokens": 2500,
+        "latency_ms": 1841,
+        "prompt_tokens": 2515,
         "completion_tokens": 71
       }
     },
@@ -136,8 +137,8 @@
         }
       },
       "llm": {
-        "latency_ms": 1822,
-        "prompt_tokens": 2672,
+        "latency_ms": 2052,
+        "prompt_tokens": 2687,
         "completion_tokens": 101
       }
     }
@@ -147,7 +148,8 @@
     "request_id": "REQ-1112-002",
     "status": "incomplete_step_limit",
     "status_label": "未完成（达到步数上限）",
-    "message": "达到步数上限（3），任务未完成；已完成的步骤见 completed_steps。",
+    "message": "达到步数上限（3），任务未完成；已完成的步骤见 completed_steps。系统核对：草稿库中没有本申请的草稿，也没有发布任何内容。",
+    "facts_summary": "系统核对：草稿库中没有本申请的草稿，也没有发布任何内容。",
     "draft": null,
     "schedule": {
       "requested_publish_at": "2026-11-12 18:00",
@@ -198,6 +200,7 @@
       "llm_mode": "real",
       "model": "qwen3.8-max",
       "prompt_version": "q1-v2",
+      "tools_version": "3d79ca5ea1",
       "steps_used": 3,
       "tool_calls_used": 3,
       "max_steps": 3,
@@ -207,8 +210,8 @@
   },
   "llm_usage": {
     "calls": 3,
-    "prompt_tokens": 7406,
-    "completion_tokens": 228,
-    "latency_ms": 5194
+    "prompt_tokens": 7448,
+    "completion_tokens": 231,
+    "latency_ms": 5427
   }
 }

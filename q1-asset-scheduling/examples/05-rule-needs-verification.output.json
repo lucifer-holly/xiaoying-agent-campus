@@ -2,7 +2,8 @@
   "request_id": "REQ-1113-004",
   "status": "completed",
   "status_label": "已保存排期草稿",
-  "message": "已为素材 M04 在视频号 2026-11-13 12:00 保存排期草稿（D-927C3EB2）。规则检查已通过，音乐授权经版权库确认有效。草稿需在发布系统中人工确认后才会正式发布。",
+  "message": "已为素材 M04 在视频号保存排期草稿 D-927C3EB2，发布时间为 2026-11-13 12:00。规则检查已通过（音乐授权经版权库确认有效），申请时段空闲，无需调整。请在发布系统中确认该草稿以完成发布。",
+  "facts_summary": "系统核对：草稿库中有本申请的排期草稿 D-927C3EB2（视频号 2026-11-13 12:00），本次新建；没有发布任何内容。",
   "draft": {
     "draft_id": "D-927C3EB2",
     "status": "scheduled_draft",
@@ -13,7 +14,7 @@
     "requested_publish_at": "2026-11-13 12:00",
     "change_reason": null,
     "warnings": [],
-    "created_at": "2026-11-10T21:53:51+08:00",
+    "created_at": "2026-11-10T22:26:41+08:00",
     "created_in_this_run": true
   },
   "schedule": {
@@ -45,6 +46,7 @@
     "llm_mode": "real",
     "model": "qwen3.8-max",
     "prompt_version": "q1-v2",
+    "tools_version": "3d79ca5ea1",
     "steps_used": 6,
     "tool_calls_used": 6,
     "max_steps": 8,

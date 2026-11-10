@@ -1,12 +1,13 @@
 {
   "trace_format": "q1-trace/v1",
-  "run_id": "53314bf267c2",
+  "run_id": "e7be6879913b",
   "case_id": "03-missing-asset-info",
   "llm_mode": "real",
   "model": "qwen3.8-max",
   "prompt_version": "q1-v2",
-  "started_at": "2026-11-10T21:53:32+08:00",
-  "finished_at": "2026-11-10T21:53:37+08:00",
+  "tools_version": "3d79ca5ea1",
+  "started_at": "2026-11-10T22:26:21+08:00",
+  "finished_at": "2026-11-10T22:26:25+08:00",
   "limits": {
     "max_steps": 8,
     "max_tool_calls": 10
@@ -66,8 +67,8 @@
         }
       },
       "llm": {
-        "latency_ms": 1537,
-        "prompt_tokens": 2228,
+        "latency_ms": 1426,
+        "prompt_tokens": 2240,
         "completion_tokens": 65
       }
     },
@@ -82,7 +83,7 @@
           "cover_url"
         ]
       },
-      "decision_note": "素材缺失文案和封面两项必填字段，按业务要求停止排期并反馈申请人补全信息。",
+      "decision_note": "素材缺失文案和封面两项必填字段，按业务要求停止排期并反馈申请人补全。",
       "ok": true,
       "result_summary": "模型提交 status=needs_input；校验后 status=needs_input（无更正）",
       "next_action": "结束",
@@ -91,9 +92,9 @@
         "corrections": []
       },
       "llm": {
-        "latency_ms": 3275,
-        "prompt_tokens": 2479,
-        "completion_tokens": 120
+        "latency_ms": 2150,
+        "prompt_tokens": 2491,
+        "completion_tokens": 119
       }
     }
   ],
@@ -103,6 +104,7 @@
     "status": "needs_input",
     "status_label": "需要补充信息",
     "message": "素材 M02 缺少必填信息，无法进入排期流程。请补充文案（caption）和封面（cover_url）后重新提交申请。",
+    "facts_summary": "系统核对：草稿库中没有本申请的草稿，也没有发布任何内容。",
     "draft": null,
     "schedule": {
       "requested_publish_at": "2026-11-13 19:00",
@@ -125,6 +127,7 @@
       "llm_mode": "real",
       "model": "qwen3.8-max",
       "prompt_version": "q1-v2",
+      "tools_version": "3d79ca5ea1",
       "steps_used": 2,
       "tool_calls_used": 2,
       "max_steps": 8,
@@ -134,8 +137,8 @@
   },
   "llm_usage": {
     "calls": 2,
-    "prompt_tokens": 4707,
-    "completion_tokens": 185,
-    "latency_ms": 4812
+    "prompt_tokens": 4731,
+    "completion_tokens": 184,
+    "latency_ms": 3576
   }
 }

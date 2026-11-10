@@ -17,14 +17,15 @@ from agent.tools import DECISION_NOTE, Tool, ToolError, ToolExecution, ToolRegis
 
 from .faults import FaultInjector
 from .rules import FIELD_LABELS, evaluate, missing_fields
-from .store import DataStore
+from .store import DataStore, DraftConflict, StorageError
 
 CST = timezone(timedelta(hours=8))
 CHANNELS = ("douyin", "wechat_channels", "xiaohongshu")
 CHANNEL_ALIASES = {"抖音": "douyin", "视频号": "wechat_channels", "微信视频号": "wechat_channels", "小红书": "xiaohongshu"}
 DRAFT_STATUSES = ("scheduled_draft", "pending_confirmation")
 MODEL_STATUSES = ("completed", "needs_input", "needs_confirmation", "blocked", "failed")
-STORAGE_ERRORS = {"STORAGE_UNAVAILABLE", "TIMEOUT"}
+# 这些错误表示“保存没有确认成功”：最终没有草稿时，状态一律按 failed 处理
+SAVE_FAILURE_CODES = {"STORAGE_UNAVAILABLE", "TIMEOUT", "INTERNAL_ERROR"}
 _PUBLISH_AT = re.compile(r"^(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2})$")
 
 CHANNEL_PARAM = {"type": "string", "enum": list(CHANNELS), "description": "发布渠道：douyin=抖音，wechat_channels=视频号，xiaohongshu=小红书"}
@@ -58,9 +59,13 @@ def normalize_request(request: dict) -> dict:
     return req
 
 
-def idempotency_key(asset_id: str, asset_version, channel: str, publish_at: str) -> str:
-    """幂等键 = 素材 + 素材版本 + 渠道 + 发布时间 的哈希。不含申请单号：两次点提交生成了不同单号也算重复。"""
-    return hashlib.sha256(f"{asset_id}|v{asset_version}|{channel}|{publish_at}".encode("utf-8")).hexdigest()
+def idempotency_key(asset_id: str, asset_version, channel: str, requested_publish_at: str) -> str:
+    """幂等键 = 申请内容（素材 + 素材版本 + 渠道 + 申请的发布时间）的哈希。
+
+    用申请时间而不是模型最终选的时段：同一张申请重复提交时，即使模型这次选了别的时段，也只会返回已有草稿。
+    不含申请单号：两次点提交生成了不同单号也算重复。
+    """
+    return hashlib.sha256(f"{asset_id}|v{asset_version}|{channel}|{requested_publish_at}".encode("utf-8")).hexdigest()
 
 
 def _is_date(text: str) -> bool:
@@ -83,6 +88,7 @@ class SchedulingSession:
         self.ledger: list[ToolExecution] = []
         self.rule_state: dict[tuple[str, str], dict] = {}
         self.created_draft_ids: list[str] = []
+        self.used_keys: list[str] = []
         self.registry = ToolRegistry(self._tools(), observer=self.ledger.append)
 
     # ---- 工具定义 ---------------------------------------------------------
@@ -140,7 +146,7 @@ class SchedulingSession:
             Tool(
                 "save_draft",
                 "把排期保存为草稿，不会发布（系统没有发布能力，发布需要人工在发布系统操作）。"
-                "按内容幂等：同一素材、渠道、发布时间只会有一份草稿，重复保存返回已有草稿（created=false）。"
+                "按申请内容幂等：同一素材（同一版本）、渠道、申请时间只会有一份草稿，重复保存（哪怕选了别的时段）都返回已有草稿（created=false）。"
                 "发布时间与申请时间不一致时必须设置 requires_confirmation=true，草稿进入待确认状态；"
                 "申请单标注日期不能改时，不能保存到其他日期。",
                 {
@@ -197,6 +203,14 @@ class SchedulingSession:
         if code not in CHANNELS:
             raise ToolError("INVALID_CHANNEL", f"不支持的渠道 {channel}，可选：{', '.join(CHANNELS)}", retryable=True)
         return code
+
+    def request_key(self) -> str | None:
+        """按申请内容计算的幂等键；申请单缺字段或素材不存在时为 None。"""
+        req = self.request
+        asset = self.store.get_asset(req.get("asset_id") or "")
+        if not asset or not req.get("channel") or not req.get("publish_at"):
+            return None
+        return idempotency_key(asset["asset_id"], asset["version"], req["channel"], req["publish_at"])
 
     # ---- 工具实现 ---------------------------------------------------------
     def read_asset(self, asset_id: str) -> dict:
@@ -273,24 +287,8 @@ class SchedulingSession:
         needs_confirmation = bool(requires_confirmation) or deviates
 
         self.faults.before("save_draft")  # 存储故障发生在写入之前：什么都没写
-        key = idempotency_key(asset["asset_id"], asset["version"], code, when)
-        existing = self.store.find_draft(idempotency_key=key)
-        if existing:
-            mine = existing["draft_id"] in self.created_draft_ids
-            message = ("这份草稿是本次处理中前一次 save_draft 写入的（上次接口没有正常返回，但写入已生效），没有新建草稿"
-                       if mine else "相同内容的草稿之前已经提交过（重复提交），没有新建草稿")
-            return {"created": False, "draft": existing, "written_earlier_in_this_run": mine, "message": message}
-        others = self.store.drafts_for_request(req["request_id"])
-        if others:
-            raise ToolError(
-                "REQUEST_ALREADY_HAS_DRAFT",
-                f"申请 {req['request_id']} 已有草稿 {others[0]['draft_id']}（{others[0]['publish_at']}），一张申请单只能有一份草稿",
-                details={"draft": others[0]},
-            )
-        occupant = self.store.slot_occupant(code, date, time)
-        if occupant:
-            raise ToolError("SLOT_OCCUPIED", f"{date} {time} 已被占用，请换时段", retryable=True, details={"occupied_by": occupant})
-
+        key = self.request_key() or idempotency_key(asset["asset_id"], asset["version"], code, when)
+        self.used_keys.append(key)
         draft = {
             "draft_id": "D-" + key[:8].upper(),
             "idempotency_key": key,
@@ -307,11 +305,31 @@ class SchedulingSession:
             "warnings": [f["message"] for f in rule["findings"] if f["level"] == "warn"],
             "created_at": datetime.now(CST).isoformat(timespec="seconds"),
         }
-        saved, created = self.store.insert_draft(draft)
+        try:  # 查重、查申请单、查时段占用和写入在存储层的同一个临界区里完成
+            saved, created = self.store.insert_draft(draft)
+        except DraftConflict as exc:
+            if exc.code == "REQUEST_ALREADY_HAS_DRAFT":
+                other = exc.detail
+                raise ToolError(
+                    "REQUEST_ALREADY_HAS_DRAFT",
+                    f"申请 {req['request_id']} 已有另一份内容不同的草稿 {other['draft_id']}（{other['publish_at']}），"
+                    "一张申请单只能有一份草稿；如需改期，请先请申请人确认旧草稿怎么处理",
+                    details={"draft": other},
+                ) from None
+            raise ToolError("SLOT_OCCUPIED", f"{date} {time} 已被占用，请换时段", retryable=True, details={"occupied_by": exc.detail}) from None
+        except StorageError as exc:
+            raise ToolError("STORAGE_UNAVAILABLE", f"{exc}，本次没有写入", retryable=True) from None
         if created:
             self.created_draft_ids.append(saved["draft_id"])
         self.faults.after_commit("save_draft")  # timeout_after_commit：写入已生效，但返回超时
-        result = {"created": created, "draft": saved, "message": "草稿已保存（未发布）"}
+        if not created:
+            mine = saved["draft_id"] in self.created_draft_ids
+            message = ("这份草稿是本次处理中前一次 save_draft 写入的（上次接口没有正常返回，但写入已生效），没有新建草稿"
+                       if mine else "同一申请内容的草稿之前已经提交过（重复提交），没有新建草稿")
+            if saved["publish_at"] != when:
+                message += f"；已有草稿的发布时间是 {saved['publish_at']}，本次请求的 {when} 没有生效"
+            return {"created": False, "draft": saved, "written_earlier_in_this_run": mine, "message": message}
+        result = {"created": True, "draft": saved, "message": "草稿已保存（未发布）"}
         if needs_confirmation:
             result["message"] += "，状态为待确认"
         if deviates and not requires_confirmation:
@@ -321,35 +339,38 @@ class SchedulingSession:
 
     # ---- 给校验器和 Trace 用 ----------------------------------------------
     def facts(self) -> dict:
-        """从调用台账和草稿库得到的“事实”，校验器只信这些，不信模型的说法。"""
+        """从调用台账和草稿库得到的“事实”，校验器只信这些，不信模型的说法。
+
+        “本申请的草稿”按申请内容（幂等键）匹配：同一单号但内容不同的草稿不算完成，只作为冲突报告。
+        """
         req = self.request
+        keys = [k for k in [self.request_key(), *self.used_keys] if k]
+        draft = next((d for d in (self.store.find_draft(idempotency_key=k) for k in keys) if d), None)
+        conflicting = next((d for d in self.store.drafts_for_request(req["request_id"])
+                            if not draft or d["draft_id"] != draft["draft_id"]), None)
         saves = [e for e in self.ledger if e.name == "save_draft"]
-        draft = None
-        ok_ids = [e.result["data"]["draft"]["draft_id"] for e in saves if e.ok]
-        if ok_ids:
-            draft = self.store.find_draft(draft_id=ok_ids[-1])
-        if draft is None:
-            mine = self.store.drafts_for_request(req["request_id"])
-            draft = mine[-1] if mine else None
         save_errors = [e.result["error"] for e in saves if not e.ok]
         rule = self.rule_state.get((req.get("asset_id"), req.get("channel")))
-        missing: list[str] = []
+        missing = [k for k in ("asset_id", "channel", "publish_at") if not req.get(k)]
         for e in self.ledger:
-            if e.name == "read_asset" and e.ok:
-                missing = list(e.result["data"]["missing_fields"])
-        if rule:
-            for f in rule["findings"]:
-                if f["rule_id"] == "R01":
-                    missing = sorted(set(missing) | set(f.get("fields", [])))
+            if e.name == "read_asset":
+                if e.ok:
+                    missing += e.result["data"]["missing_fields"]
+                elif e.result["error"]["code"] == "ASSET_NOT_FOUND":
+                    missing.append("asset_id")
+        for f in (rule or {}).get("findings", []):
+            if f["rule_id"] == "R01":
+                missing += f.get("fields", [])
         return {
             "draft": draft,
             "draft_created_this_run": bool(draft and draft["draft_id"] in self.created_draft_ids),
+            "conflicting_draft": conflicting,
             "save_attempts": len(saves),
             "save_errors": save_errors,
-            "storage_failure": any(err["code"] in STORAGE_ERRORS for err in save_errors),
+            "save_failed": any(err["code"] in SAVE_FAILURE_CODES for err in save_errors),
             "rule": rule,
             "block_findings": [f for f in (rule or {}).get("findings", []) if f["level"] == "block"],
-            "missing_fields": missing,
+            "missing_fields": sorted(set(missing), key=missing.index),
             "tools_called": [e.name for e in self.ledger],
         }
 
@@ -393,6 +414,8 @@ def summarize(name: str, args: dict, result: dict) -> str:
             verb = "已存在（本次处理中前一次调用已写入，未新建）"
         else:
             verb = "已存在（重复提交，未新建）"
+        if not data["created"] and args.get("publish_at") and args["publish_at"] != d["publish_at"]:
+            verb += f"，本次请求的 {args['publish_at']} 未生效"
         forced = "；系统强制待确认" if data.get("confirmation_forced") else ""
         return f"草稿 {d['draft_id']} {verb}，状态 {d['status']}，{d['publish_at']}{forced}"
     return "ok"

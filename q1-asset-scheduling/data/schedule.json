@@ -9,6 +9,12 @@
     {"channel": "douyin", "date": "2026-11-13", "time": "12:00", "asset_id": "M24", "title": "午间好物速览"},
     {"channel": "douyin", "date": "2026-11-14", "time": "18:00", "asset_id": "M25", "title": "周末穿搭合集"},
     {"channel": "wechat_channels", "date": "2026-11-13", "time": "18:00", "asset_id": "M26", "title": "品牌故事短片"},
-    {"channel": "xiaohongshu", "date": "2026-11-12", "time": "19:00", "asset_id": "M27", "title": "通勤包里有什么"}
+    {"channel": "xiaohongshu", "date": "2026-11-12", "time": "19:00", "asset_id": "M27", "title": "通勤包里有什么"},
+    {"channel": "wechat_channels", "date": "2026-11-15", "time": "09:00", "asset_id": "M31", "title": "周日品牌日专题 1"},
+    {"channel": "wechat_channels", "date": "2026-11-15", "time": "12:00", "asset_id": "M32", "title": "周日品牌日专题 2"},
+    {"channel": "wechat_channels", "date": "2026-11-15", "time": "18:00", "asset_id": "M33", "title": "周日品牌日专题 3"},
+    {"channel": "wechat_channels", "date": "2026-11-15", "time": "19:00", "asset_id": "M34", "title": "周日品牌日专题 4"},
+    {"channel": "wechat_channels", "date": "2026-11-15", "time": "20:00", "asset_id": "M35", "title": "周日品牌日专题 5"},
+    {"channel": "wechat_channels", "date": "2026-11-15", "time": "21:00", "asset_id": "M36", "title": "周日品牌日专题 6"}
   ]
 }

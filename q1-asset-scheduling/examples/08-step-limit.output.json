@@ -2,7 +2,8 @@
   "request_id": "REQ-1112-002",
   "status": "incomplete_step_limit",
   "status_label": "未完成（达到步数上限）",
-  "message": "达到步数上限（3），任务未完成；已完成的步骤见 completed_steps。",
+  "message": "达到步数上限（3），任务未完成；已完成的步骤见 completed_steps。系统核对：草稿库中没有本申请的草稿，也没有发布任何内容。",
+  "facts_summary": "系统核对：草稿库中没有本申请的草稿，也没有发布任何内容。",
   "draft": null,
   "schedule": {
     "requested_publish_at": "2026-11-12 18:00",
@@ -53,6 +54,7 @@
     "llm_mode": "real",
     "model": "qwen3.8-max",
     "prompt_version": "q1-v2",
+    "tools_version": "3d79ca5ea1",
     "steps_used": 3,
     "tool_calls_used": 3,
     "max_steps": 3,

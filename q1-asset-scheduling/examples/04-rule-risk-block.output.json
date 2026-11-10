@@ -3,6 +3,7 @@
   "status": "blocked",
   "status_label": "规则风险，已阻断",
   "message": "素材 M03 在小红书渠道规则检查未通过，命中 R02「绝对化用语」：文案含“销量第一”“史上最”“最强”等表述，已阻断排期。请删除或改写这些绝对化用语后重新提交审核，再发起排期申请。",
+  "facts_summary": "系统核对：草稿库中没有本申请的草稿，也没有发布任何内容。",
   "draft": null,
   "schedule": {
     "requested_publish_at": "2026-11-13 12:00",
@@ -42,6 +43,7 @@
     "llm_mode": "real",
     "model": "qwen3.8-max",
     "prompt_version": "q1-v2",
+    "tools_version": "3d79ca5ea1",
     "steps_used": 3,
     "tool_calls_used": 3,
     "max_steps": 8,

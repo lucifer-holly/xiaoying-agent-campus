@@ -77,15 +77,18 @@ class QwenLLM:
             )
         except Exception as exc:  # openai 的认证、限流、网络、5xx 错误统一转成 LLMError
             raise LLMError(f"{type(exc).__name__}: {exc}") from exc
-        choice = response.choices[0]
-        message = choice.message
-        calls = [
-            ToolCall(id=c.id or f"call_{i}", name=c.function.name, arguments=c.function.arguments or "{}")
-            for i, c in enumerate(message.tool_calls or [])
-        ]
-        usage = None
-        if response.usage:
-            usage = {"prompt_tokens": response.usage.prompt_tokens, "completion_tokens": response.usage.completion_tokens}
+        try:  # 返回结构不符合预期（空 choices、缺字段）也按模型调用失败处理，不让循环崩掉
+            choice = response.choices[0]
+            message = choice.message
+            calls = [
+                ToolCall(id=c.id or f"call_{i}", name=c.function.name, arguments=c.function.arguments or "{}")
+                for i, c in enumerate(message.tool_calls or [])
+            ]
+            usage = None
+            if response.usage:
+                usage = {"prompt_tokens": response.usage.prompt_tokens, "completion_tokens": response.usage.completion_tokens}
+        except (AttributeError, IndexError, KeyError, TypeError) as exc:
+            raise LLMError(f"模型返回格式异常：{type(exc).__name__}: {exc}") from exc
         return LLMReply(
             content=message.content or "",
             tool_calls=calls,

@@ -38,7 +38,7 @@ def test_false_save_success_is_downgraded_to_failed():
     result = run(PREP + [SAVE, finish("completed", draft_id="D-FAKE0001", message="已保存成功")], faults={"save_draft": "error"})
     out = result.output
     assert out["status"] == "failed" and out["draft"] is None
-    assert {"draft_id_from_store", "no_false_save_success"} <= checks(out)
+    assert {"draft_id_from_store", "save_failure_is_failed"} <= checks(out)
     assert out["model_claim"]["status"] == "completed" and out["message"].startswith("【校验器已更正】")
 
 
@@ -47,7 +47,7 @@ def test_completed_claim_on_pending_draft_becomes_needs_confirmation():
     save_19 = {"tool": "save_draft", "args": {**SAVE["args"], "publish_at": "2026-11-12 19:00"}}
     out = run(PREP[:2] + [save_19, finish("completed")], request=request).output
     assert out["status"] == "needs_confirmation" and out["draft"]["status"] == "pending_confirmation"
-    assert "pending_draft_needs_confirmation" in checks(out)
+    assert "status_matches_store" in checks(out)
 
 
 def test_published_status_is_never_accepted():
@@ -60,7 +60,7 @@ def test_published_status_is_never_accepted():
 def test_save_state_comes_from_store_after_ambiguous_timeout():
     out = run(PREP + [SAVE, finish("failed", message="保存超时，未保存")], faults={"save_draft": "timeout_after_commit"}).output
     assert out["status"] == "completed" and out["draft"]["created_in_this_run"] is True
-    assert "save_state_from_store" in checks(out)
+    assert "status_matches_store" in checks(out)
 
 
 def test_step_limit_returns_incomplete_status():

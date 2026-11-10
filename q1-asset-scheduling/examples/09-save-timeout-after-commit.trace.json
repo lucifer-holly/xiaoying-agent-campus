@@ -1,12 +1,13 @@
 {
   "trace_format": "q1-trace/v1",
-  "run_id": "8a293cd7fa27",
+  "run_id": "5496f69062ae",
   "case_id": "09-save-timeout-after-commit",
   "llm_mode": "real",
   "model": "qwen3.8-max",
   "prompt_version": "q1-v2",
-  "started_at": "2026-11-10T21:54:36+08:00",
-  "finished_at": "2026-11-10T21:54:49+08:00",
+  "tools_version": "3d79ca5ea1",
+  "started_at": "2026-11-10T22:27:22+08:00",
+  "finished_at": "2026-11-10T22:27:35+08:00",
   "limits": {
     "max_steps": 8,
     "max_tool_calls": 10
@@ -30,7 +31,7 @@
       "args": {
         "asset_id": "M05"
       },
-      "decision_note": "先读取素材 M05 的详情，确认必填信息是否齐全，再决定后续规则检查与排期。",
+      "decision_note": "先读取素材 M05 的详情，确认必填信息是否齐全后再进行规则检查。",
       "ok": true,
       "result_summary": "M05《燕麦杯的三种早餐做法》video；38 秒；必填齐全；音乐授权 licensed",
       "next_action": "check_rules",
@@ -62,9 +63,9 @@
         }
       },
       "llm": {
-        "latency_ms": 1561,
-        "prompt_tokens": 2226,
-        "completion_tokens": 65
+        "latency_ms": 1840,
+        "prompt_tokens": 2238,
+        "completion_tokens": 60
       }
     },
     {
@@ -98,8 +99,8 @@
         }
       },
       "llm": {
-        "latency_ms": 1732,
-        "prompt_tokens": 2495,
+        "latency_ms": 1645,
+        "prompt_tokens": 2502,
         "completion_tokens": 74
       }
     },
@@ -111,7 +112,7 @@
         "date": "2026-11-13",
         "time": "09:00"
       },
-      "decision_note": "规则检查通过，查询申请时段 2026-11-13 09:00 在小红书是否空闲。",
+      "decision_note": "规则检查通过，查询申请时段 2026-11-13 09:00 是否空闲。",
       "ok": true,
       "result_summary": "小红书 2026-11-13 09:00：free",
       "next_action": "save_draft",
@@ -130,9 +131,9 @@
         }
       },
       "llm": {
-        "latency_ms": 1945,
-        "prompt_tokens": 2673,
-        "completion_tokens": 106
+        "latency_ms": 1871,
+        "prompt_tokens": 2680,
+        "completion_tokens": 104
       }
     },
     {
@@ -144,7 +145,7 @@
         "publish_at": "2026-11-13 09:00",
         "requires_confirmation": false
       },
-      "decision_note": "申请时段空闲且与申请时间一致，直接保存排期草稿，无需申请人确认。",
+      "decision_note": "申请时段空闲且与申请时间一致，直接保存排期草稿。",
       "ok": false,
       "result_summary": "失败 TIMEOUT：保存接口响应超时（10 秒），无法确认是否已写入（可重试）",
       "next_action": "save_draft",
@@ -157,9 +158,9 @@
         }
       },
       "llm": {
-        "latency_ms": 2103,
-        "prompt_tokens": 2858,
-        "completion_tokens": 117
+        "latency_ms": 2929,
+        "prompt_tokens": 2863,
+        "completion_tokens": 113
       }
     },
     {
@@ -171,7 +172,7 @@
         "publish_at": "2026-11-13 09:00",
         "requires_confirmation": false
       },
-      "decision_note": "上次保存超时且可重试，按规则重试一次以确认草稿是否写入。",
+      "decision_note": "上次保存超时且可重试，按规则重试一次保存草稿。",
       "ok": true,
       "result_summary": "草稿 D-862480F4 已存在（本次处理中前一次调用已写入，未新建），状态 scheduled_draft，2026-11-13 09:00",
       "next_action": "finish",
@@ -193,16 +194,16 @@
             "change_reason": null,
             "rule_verdict": "pass",
             "warnings": [],
-            "created_at": "2026-11-10T21:54:44+08:00"
+            "created_at": "2026-11-10T22:27:30+08:00"
           },
           "written_earlier_in_this_run": true,
           "message": "这份草稿是本次处理中前一次 save_draft 写入的（上次接口没有正常返回，但写入已生效），没有新建草稿"
         }
       },
       "llm": {
-        "latency_ms": 1893,
-        "prompt_tokens": 3034,
-        "completion_tokens": 115
+        "latency_ms": 2153,
+        "prompt_tokens": 3035,
+        "completion_tokens": 112
       }
     },
     {
@@ -210,11 +211,11 @@
       "tool": "finish",
       "args": {
         "status": "completed",
-        "message": "已按申请将素材 M05 排入小红书 2026-11-13 09:00，草稿编号 D-862480F4。规则检查通过、时段空闲，无需额外确认；请在发布系统中人工确认后发布。",
+        "message": "已为素材 M05 在小红书 2026-11-13 09:00 保存排期草稿（D-862480F4）。规则检查通过，申请时段空闲；本次重试确认草稿已写入，未新建。请在发布系统人工确认后发布。",
         "draft_id": "D-862480F4",
         "publish_at": "2026-11-13 09:00"
       },
-      "decision_note": "草稿已成功保存（重试后确认写入），按申请时间完成排期，提交 completed 结果。",
+      "decision_note": "草稿已成功保存（重试确认），按申请时间排期完成，提交最终结果。",
       "ok": true,
       "result_summary": "模型提交 status=completed；校验后 status=completed（无更正）",
       "next_action": "结束",
@@ -223,9 +224,9 @@
         "corrections": []
       },
       "llm": {
-        "latency_ms": 3265,
-        "prompt_tokens": 3459,
-        "completion_tokens": 178
+        "latency_ms": 3069,
+        "prompt_tokens": 3457,
+        "completion_tokens": 182
       }
     }
   ],
@@ -234,7 +235,8 @@
     "request_id": "REQ-1113-005",
     "status": "completed",
     "status_label": "已保存排期草稿",
-    "message": "已按申请将素材 M05 排入小红书 2026-11-13 09:00，草稿编号 D-862480F4。规则检查通过、时段空闲，无需额外确认；请在发布系统中人工确认后发布。",
+    "message": "已为素材 M05 在小红书 2026-11-13 09:00 保存排期草稿（D-862480F4）。规则检查通过，申请时段空闲；本次重试确认草稿已写入，未新建。请在发布系统人工确认后发布。",
+    "facts_summary": "系统核对：草稿库中有本申请的排期草稿 D-862480F4（小红书 2026-11-13 09:00），本次新建；没有发布任何内容。",
     "draft": {
       "draft_id": "D-862480F4",
       "status": "scheduled_draft",
@@ -245,7 +247,7 @@
       "requested_publish_at": "2026-11-13 09:00",
       "change_reason": null,
       "warnings": [],
-      "created_at": "2026-11-10T21:54:44+08:00",
+      "created_at": "2026-11-10T22:27:30+08:00",
       "created_in_this_run": true
     },
     "schedule": {
@@ -271,6 +273,7 @@
       "llm_mode": "real",
       "model": "qwen3.8-max",
       "prompt_version": "q1-v2",
+      "tools_version": "3d79ca5ea1",
       "steps_used": 6,
       "tool_calls_used": 6,
       "max_steps": 8,
@@ -280,8 +283,8 @@
   },
   "llm_usage": {
     "calls": 6,
-    "prompt_tokens": 16745,
-    "completion_tokens": 655,
-    "latency_ms": 12499
+    "prompt_tokens": 16775,
+    "completion_tokens": 645,
+    "latency_ms": 13507
   }
 }
