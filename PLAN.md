@@ -33,7 +33,9 @@ git config user.name "lucifer-holly" && git config user.email "63133305+lucifer-
 7. 主 Agent 自验收（对照第 2 节 Q1 验收点 + 根 README 清单），可派一个独立子 Agent 只读复核“越权发布 / 虚报保存成功 / 防重复”
 8. `git subtree split` 导出提交分支并推送，把 SHA 交给用户
 9. 实际用时、AI 使用范围如实写入 docs/04、docs/05
-10. （核心验收通过后）做演示，见第 6 节
+10. （核心验收通过后）做演示，见第 6 节：云端完成回放页、HTTP 服务、`deploy/` 与 `scripts/deploy.sh`，并在云端本地端口实跑验证；**部署由用户在本地 Claude Code 完成**
+11. 写 `DEPLOY_HANDOFF.md`：给本地 Claude Code 的部署交接说明（前置检查、步骤、回滚、健康检查；明确不得改动 booksprite / gamesci.gret.me 的任何配置和服务）
+12. 本地部署后的提交（如 README 演示链接确认）同样不得带 AI 署名：本地 `~/.claude/settings.json` 需关闭 co-author（如 `"includeCoAuthoredBy": false`，以所用版本文档为准）
 
 ## 6. 演示链接（核心完成后再做，用时单独记录）
 
