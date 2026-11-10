@@ -114,6 +114,7 @@ scripts/record_examples.py   # 用真实模型批量跑 examples 并落盘
 - 协议：OpenAI 兼容 Chat Completions + function calling，Python 依赖 `openai` SDK
 - 端点：`LLM_BASE_URL`，默认 `https://dashscope.aliyuncs.com/compatible-mode/v1`
 - 密钥：`LLM_API_KEY`；为空字符串按缺失处理，此时只能使用 `--llm mock`，并给出明确提示
+- **云端会话的密钥注入方式**：真实 Key 配在环境的「网络密钥」里（主机 `dashscope.aliyuncs.com`，标头 `Authorization`，前缀 `Bearer`），由出口代理加到请求头上；容器里的环境变量只有占位值 `LLM_API_KEY=injected-by-proxy`。新会话第一步：用一个极短请求验证代理会覆盖占位认证头；若返回 401，改为检测到占位值时不发送 Authorization 头，交由代理添加。评审本地运行时直接把 `LLM_API_KEY` 设为真实 Key，代码无需改动
 - 模型：`LLM_MODEL`，默认 `qwen3.8-max`；录制 Trace 时把实际模型名写进 Trace 头部
 - 思考模式：Qwen3.5 及以后默认开启思考，booksprite 实测 trivial prompt 也要 16 秒。本项目通过 `extra_body={"enable_thinking": False}` 显式关闭；决策依据改由工具参数 `decision_note` 提供。录制 Trace 前需先实测关闭思考后的工具调用质量，不够再评估是否开启
 - 不提交真实密钥：`.env.example` 只列变量名
@@ -131,7 +132,7 @@ scripts/record_examples.py   # 用真实模型批量跑 examples 并落盘
 | # | 事项 | 状态 |
 |---|---|---|
 | U1 | 决定范围：规则只要求一道；四道都做（最后选一道提交）还是只做一道 | 待定 |
-| U2 | 百炼 API Key 加到环境设置的 Network secrets，变量名 `LLM_API_KEY`（可与 booksprite 共用同一个 Key） | 待定 |
+| U2 | 网络密钥：主机 `dashscope.aliyuncs.com` + 令牌 = 百炼 Key；环境变量：`LLM_API_KEY=injected-by-proxy`（占位） | 待定 |
 | U3 | 记录开始时间（`docs/05` 要写实际用时） | 待定 |
 | U4 | Key 加好后，开新会话并勾选本仓库，让新会话先读 `PLAN.md` | Key 加好后 |
 | U5 | 完成后：亲手运行测试和用例，读懂 `agent/loop.py`，自己改一处并记入 `docs/04` | 实现完成后 |
