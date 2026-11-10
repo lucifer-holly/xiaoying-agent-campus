@@ -9,7 +9,8 @@
 - [x] 四道题已拆解（第 2 节）
 - [x] 共用骨架设计已定（第 3 节）
 - [ ] **待用户决定**：做几道题、正式提交哪道（第 5 节）
-- [ ] **待用户提供**：模型厂商 + API Key（环境变量，见第 5 节）
+- [x] 模型已定：阿里云百炼 Qwen3.8 系列（OpenAI 兼容接口，见第 3.1 节）
+- [ ] **待用户提供**：`LLM_API_KEY` 加入环境 Network secrets（见第 5 节）
 - [ ] 编写共用骨架（Mock 先跑通）
 - [ ] 分派子 Agent 逐题实现
 - [ ] 真实模型录制 Trace（需要 Key，须在新会话中进行）
@@ -92,7 +93,7 @@ git config user.name "lucifer-holly" && git config user.email "63133305+lucifer-
 src/
 ├── main.py           # CLI：--input --llm {mock,real} --max-steps --trace-out
 ├── agent/loop.py     # ReAct 循环：调用模型 → 解析工具调用 → 执行 → 写回观察 → 直到 finish 或触顶
-├── agent/llm.py      # LLM 接口：RealLLM（厂商待定）/ ScriptedMockLLM（按脚本返回）
+├── agent/llm.py      # LLM 接口：QwenLLM（百炼 OpenAI 兼容）/ ScriptedMockLLM（按脚本返回）
 ├── agent/tools.py    # 工具注册：JSON Schema、参数校验、异常统一封装为 {ok, data, error}
 ├── agent/trace.py    # Trace：step、tool、args、result_summary、next_action、decision_note
 ├── domain/           # 本题业务工具 + 输出校验器（硬约束）
@@ -108,6 +109,15 @@ scripts/record_examples.py   # 用真实模型批量跑 examples 并落盘
 - **触顶**：达到 `max_steps` 或工具调用次数上限时，返回 `status: "incomplete_step_limit"`，并附上已完成的步骤。
 - **统一状态枚举**：`completed` / `needs_input` / `needs_confirmation` / `blocked` / `failed` / `incomplete_step_limit`，各题可增加业务状态。
 
+### 3.1 模型接入（沿用 booksprite 的约定）
+
+- 协议：OpenAI 兼容 Chat Completions + function calling，Python 依赖 `openai` SDK
+- 端点：`LLM_BASE_URL`，默认 `https://dashscope.aliyuncs.com/compatible-mode/v1`
+- 密钥：`LLM_API_KEY`；为空字符串按缺失处理，此时只能使用 `--llm mock`，并给出明确提示
+- 模型：`LLM_MODEL`，默认 `qwen3.8-max`；录制 Trace 时把实际模型名写进 Trace 头部
+- 思考模式：Qwen3.5 及以后默认开启思考，booksprite 实测 trivial prompt 也要 16 秒。本项目通过 `extra_body={"enable_thinking": False}` 显式关闭；决策依据改由工具参数 `decision_note` 提供。录制 Trace 前需先实测关闭思考后的工具调用质量，不够再评估是否开启
+- 不提交真实密钥：`.env.example` 只列变量名
+
 ## 4. 执行编排
 
 1. 主 Agent：在 `q1-asset-scheduling/` 写出骨架并用 Mock 跑通，再复制到另外三个目录。
@@ -120,8 +130,8 @@ scripts/record_examples.py   # 用真实模型批量跑 examples 并落盘
 
 | # | 事项 | 状态 |
 |---|---|---|
-| U1 | 决定范围：四道都做（最后选一道提交）还是只做一道 | 待定 |
-| U2 | 选定模型厂商，申请 API Key，加到环境设置的 Network secrets（变量名：`ANTHROPIC_API_KEY` 或 `DEEPSEEK_API_KEY` 等） | 待定 |
+| U1 | 决定范围：规则只要求一道；四道都做（最后选一道提交）还是只做一道 | 待定 |
+| U2 | 百炼 API Key 加到环境设置的 Network secrets，变量名 `LLM_API_KEY`（可与 booksprite 共用同一个 Key） | 待定 |
 | U3 | 记录开始时间（`docs/05` 要写实际用时） | 待定 |
 | U4 | Key 加好后，开新会话并勾选本仓库，让新会话先读 `PLAN.md` | Key 加好后 |
 | U5 | 完成后：亲手运行测试和用例，读懂 `agent/loop.py`，自己改一处并记入 `docs/04` | 实现完成后 |
