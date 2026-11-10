@@ -33,6 +33,17 @@ git config user.name "lucifer-holly" && git config user.email "63133305+lucifer-
 7. 主 Agent 自验收（对照第 2 节 Q1 验收点 + 根 README 清单），可派一个独立子 Agent 只读复核“越权发布 / 虚报保存成功 / 防重复”
 8. `git subtree split` 导出提交分支并推送，把 SHA 交给用户
 9. 实际用时、AI 使用范围如实写入 docs/04、docs/05
+10. （核心验收通过后）做演示，见第 6 节
+
+## 6. 演示链接（核心完成后再做，用时单独记录）
+
+- 定位：补充体验，README 主入口仍是 CLI 命令；规则写明截图/视频不能替代代码
+- ① 回放页（必做）：`q1-asset-scheduling/demo/` 静态页，读取 `examples/*.trace.json` 逐步展示真实模型 Trace；发布到 GitHub Pages
+- ② 实时演示（可选，待用户确认服务器信息）：同一套 Agent 外包一层 HTTP API + 简单网页；部署到用户阿里云服务器
+  - 防护：访问口令 `DEMO_ACCESS_CODE`、按 IP 限流、每日调用上限，超限自动切回放
+  - 交付 `deploy/`：安装脚本、Nginx 反代配置、systemd 服务、HTTPS 证书说明；用户在服务器上执行一条命令完成部署，Key 只存在服务器本地 `.env`
+  - 云端会话不持有服务器 SSH 凭据
+- 待用户确认：服务器地域（中国大陆 / 香港或海外）、域名是否已 ICP 备案、使用的子域名、服务器系统版本
 
 ## 1. 总原则
 
