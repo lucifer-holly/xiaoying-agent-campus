@@ -130,7 +130,7 @@ remote "if ! cmp -s /tmp/$SERVICE.service.new /etc/systemd/system/$SERVICE.servi
 
 step "设置权限"
 # 代码和 venv 属 root、对服务用户只读；只有 state/ 归 caddy 可写；.env 只有 root 能读（systemd 以 root 读取）
-remote "chown -R root:root $REMOTE/app $REMOTE/venv && chmod -R a+rX $REMOTE/app $REMOTE/venv && chown caddy:caddy $REMOTE/state && chmod 700 $REMOTE/state && chown root:root $REMOTE/.env && chmod 600 $REMOTE/.env"
+remote "chown root:root $REMOTE && chmod 755 $REMOTE && chown -R root:root $REMOTE/app $REMOTE/venv && chmod -R a+rX $REMOTE/app $REMOTE/venv && chown caddy:caddy $REMOTE/state && chmod 700 $REMOTE/state && chown root:root $REMOTE/.env && chmod 600 $REMOTE/.env"
 
 step "重启服务"
 remote "systemctl restart $SERVICE"
