@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>素材排期 Agent · 运行回放</title>
+  <meta name="description" content="素材审核与发布排期 Agent：真实模型运行回放与实时演示">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <h1>素材审核与发布排期 Agent</h1>
+      <p class="sub" id="meta">真实模型运行回放</p>
+    </div>
+    <nav class="tabs" role="tablist" aria-label="视图">
+      <button type="button" role="tab" data-view="replay" aria-selected="true">运行回放</button>
+      <button type="button" role="tab" data-view="compare" aria-selected="false">路径对比</button>
+      <button type="button" role="tab" data-view="live" aria-selected="false" id="tab-live" hidden>实时运行</button>
+    </nav>
+  </header>
+
+  <p class="notice" role="note">
+    只保存排期草稿，<strong>不会真实发布</strong>：系统里没有发布工具。回放内容是真实模型的原始运行记录（<code>examples/*.trace.json</code>），未经修改。
+  </p>
+
+  <main>
+    <section id="view-replay" class="view view-replay">
+      <aside class="case-list" id="case-list" aria-label="用例列表"></aside>
+      <article class="detail" id="case-detail" aria-live="polite"></article>
+    </section>
+    <section id="view-compare" class="view" hidden></section>
+    <section id="view-live" class="view" hidden></section>
+  </main>
+
+  <footer class="footer">
+    <span>小影校招 AI Agent 考核 · Q1</span>
+    <span id="generated"></span>
+  </footer>
+
+  <noscript><p class="notice">回放页需要启用 JavaScript；也可以直接查看仓库里的 examples/*.trace.json。</p></noscript>
+  <script src="data/replay.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

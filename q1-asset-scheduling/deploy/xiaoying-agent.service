@@ -1,0 +1,40 @@
+# /etc/systemd/system/xiaoying-agent.service —— 由 scripts/deploy.sh 安装和更新
+[Unit]
+Description=xiaoying-agent demo (Q1 asset review & scheduling agent)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=caddy
+Group=caddy
+WorkingDirectory=/srv/xiaoying-agent/app
+# 默认值写在这里，/srv/xiaoying-agent/.env 里的同名变量会覆盖它们
+Environment=PORT=8710 HOST=127.0.0.1 DEMO_STATE_DIR=/srv/xiaoying-agent/state PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1
+EnvironmentFile=/srv/xiaoying-agent/.env
+ExecStart=/srv/xiaoying-agent/venv/bin/python src/server.py
+Restart=on-failure
+RestartSec=3
+
+# 加固：只读文件系统，只有 state/ 可写；看不到 booksprite 和 Caddy 的数据
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+ReadWritePaths=/srv/xiaoying-agent/state
+InaccessiblePaths=-/srv/shuling -/var/lib/caddy -/etc/caddy
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+RestrictRealtime=true
+LockPersonality=true
+CapabilityBoundingSet=
+UMask=0077
+# 内存上限：服务器只有约 1.6G，避免挤占同机的其他服务（cgroup v2）
+MemoryMax=300M
+TasksMax=64
+
+[Install]
+WantedBy=multi-user.target

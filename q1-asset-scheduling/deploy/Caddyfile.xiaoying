@@ -1,0 +1,11 @@
+# xiaoying.gret.me 站点片段：追加到服务器 /etc/caddy/Caddyfile 末尾。
+# 只追加这一段，不要改动文件里已有的站点块（例如 gamesci.gret.me）。
+# 追加后先 `caddy validate --config /etc/caddy/Caddyfile`，再 `systemctl reload caddy`（reload，不要 restart）。
+xiaoying.gret.me {
+	encode zstd gzip
+	request_body {
+		max_size 16KB
+	}
+	header Strict-Transport-Security "max-age=31536000"
+	reverse_proxy 127.0.0.1:8710
+}
