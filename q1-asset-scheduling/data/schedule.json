@@ -1,0 +1,14 @@
+{
+  "_comment": "合成发布日历：每个渠道每天 6 个固定时段，每个时段只能排一条内容。bookings 是已占用的时段；Agent 保存的草稿同样会占用时段。",
+  "timezone": "Asia/Shanghai (UTC+8)",
+  "slot_times": ["09:00", "12:00", "18:00", "19:00", "20:00", "21:00"],
+  "bookings": [
+    {"channel": "douyin", "date": "2026-11-12", "time": "12:00", "asset_id": "M21", "title": "午间秒杀清单"},
+    {"channel": "douyin", "date": "2026-11-12", "time": "18:00", "asset_id": "M22", "title": "双十一晚会直播预告"},
+    {"channel": "douyin", "date": "2026-11-12", "time": "20:00", "asset_id": "M23", "title": "直播间福利返场"},
+    {"channel": "douyin", "date": "2026-11-13", "time": "12:00", "asset_id": "M24", "title": "午间好物速览"},
+    {"channel": "douyin", "date": "2026-11-14", "time": "18:00", "asset_id": "M25", "title": "周末穿搭合集"},
+    {"channel": "wechat_channels", "date": "2026-11-13", "time": "18:00", "asset_id": "M26", "title": "品牌故事短片"},
+    {"channel": "xiaohongshu", "date": "2026-11-12", "time": "19:00", "asset_id": "M27", "title": "通勤包里有什么"}
+  ]
+}

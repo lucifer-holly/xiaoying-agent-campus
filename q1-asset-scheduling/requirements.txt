@@ -1,0 +1,2 @@
+# 运行依赖：只有 openai SDK（百炼 OpenAI 兼容接口）。--llm mock 不需要它。
+openai>=1.40

@@ -1,0 +1,9 @@
+{
+  "_comment": "合成版权库。check_rules(deep_check=true) 才会查这里；素材库里的 license_status 可能滞后于版权库。",
+  "licenses": [
+    {"license_id": "LIC-2026-0102", "track": "City Pop Loop", "status": "active", "valid_until": "2027-01-31", "channels": ["douyin", "wechat_channels", "xiaohongshu"]},
+    {"license_id": "LIC-2026-0311", "track": "Morning Walk", "status": "active", "valid_until": "2027-03-31", "channels": ["douyin", "wechat_channels", "xiaohongshu"]},
+    {"license_id": "LIC-2026-0415", "track": "Neon Drive", "status": "active", "valid_until": "2027-10-31", "channels": ["douyin", "wechat_channels", "xiaohongshu"], "note": "2026-11-10 法务审批通过，素材库状态尚未同步"},
+    {"license_id": "LIC-2026-0520", "track": "Sunny Kitchen", "status": "active", "valid_until": "2027-05-31", "channels": ["douyin", "wechat_channels", "xiaohongshu"]}
+  ]
+}

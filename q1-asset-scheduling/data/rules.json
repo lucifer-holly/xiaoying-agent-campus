@@ -1,0 +1,46 @@
+{
+  "_comment": "合成规则库。check_rules 工具按这里的配置逐条检查；规则结论由代码给出，不由模型判断。",
+  "required_fields": {
+    "common": ["title", "caption", "cover_url"],
+    "video": ["duration_sec"]
+  },
+  "channels": {
+    "douyin": {"name": "抖音", "types": ["video", "image_text"], "max_duration_sec": 300},
+    "wechat_channels": {"name": "视频号", "types": ["video"], "max_duration_sec": 180},
+    "xiaohongshu": {"name": "小红书", "types": ["video", "image_text"], "max_duration_sec": 300}
+  },
+  "rules": [
+    {
+      "rule_id": "R01",
+      "name": "必填信息",
+      "level": "missing",
+      "description": "标题、文案、封面必填；视频还必须有时长。缺失时无法审核，需要申请人补充。"
+    },
+    {
+      "rule_id": "R02",
+      "name": "绝对化用语",
+      "level": "block",
+      "description": "标题和文案不得使用绝对化用语（参照《广告法》第九条）。",
+      "terms": ["全网第一", "销量第一", "史上最", "最强", "最好", "最佳", "顶级", "国家级", "100%有效", "万能"]
+    },
+    {
+      "rule_id": "R03",
+      "name": "音乐版权",
+      "level": "block",
+      "description": "使用背景音乐必须有有效授权。素材库状态为 pending 时需补查版权库（deep_check）；无授权或授权过期则阻断。"
+    },
+    {
+      "rule_id": "R04",
+      "name": "渠道格式",
+      "level": "block",
+      "description": "素材类型必须是渠道支持的类型；视频时长不得超过渠道上限。"
+    },
+    {
+      "rule_id": "R05",
+      "name": "标题长度",
+      "level": "warn",
+      "description": "标题超过 30 个字符时在部分渠道会被截断，提示但不阻断。",
+      "max_title_len": 30
+    }
+  ]
+}

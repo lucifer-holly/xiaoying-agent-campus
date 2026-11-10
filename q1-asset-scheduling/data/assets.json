@@ -1,0 +1,96 @@
+{
+  "_comment": "合成素材库。所有内容均为虚构，仅用于复现验收场景。",
+  "assets": [
+    {
+      "asset_id": "M01",
+      "title": "冬季轻暖羽绒服上新｜30 秒看懂三种通勤穿搭",
+      "type": "video",
+      "duration_sec": 30,
+      "caption": "今冬轻暖羽绒服上新，三种通勤穿搭一次看懂。#冬季穿搭 #通勤",
+      "cover_url": "https://assets.example.com/m01/cover-v3.jpg",
+      "tags": ["冬季穿搭", "羽绒服"],
+      "music": {"track": "Morning Walk", "license_id": "LIC-2026-0311", "license_status": "licensed"},
+      "owner": "内容组·林悦",
+      "version": 3,
+      "updated_at": "2026-11-09 16:20"
+    },
+    {
+      "asset_id": "M02",
+      "title": "城市门店探访 vlog（第 4 期）",
+      "type": "video",
+      "duration_sec": 52,
+      "caption": null,
+      "cover_url": null,
+      "tags": ["门店探访"],
+      "music": {"track": "City Pop Loop", "license_id": "LIC-2026-0102", "license_status": "licensed"},
+      "owner": "门店组·陈拓",
+      "version": 1,
+      "updated_at": "2026-11-10 09:05"
+    },
+    {
+      "asset_id": "M03",
+      "title": "保温杯 12 小时实测",
+      "type": "image_text",
+      "duration_sec": null,
+      "caption": "全网销量第一的保温杯！史上最强保温，12 小时依然烫口。#好物推荐 #保温杯",
+      "cover_url": "https://assets.example.com/m03/cover-v2.jpg",
+      "tags": ["好物推荐"],
+      "music": null,
+      "owner": "电商组·许诺",
+      "version": 2,
+      "updated_at": "2026-11-09 21:40"
+    },
+    {
+      "asset_id": "M04",
+      "title": "新款降噪耳机开箱：续航、降噪、佩戴一次说清",
+      "type": "video",
+      "duration_sec": 45,
+      "caption": "开箱新款降噪耳机，续航、降噪和佩戴感一次说清。#数码开箱",
+      "cover_url": "https://assets.example.com/m04/cover-v1.jpg",
+      "tags": ["数码开箱"],
+      "music": {"track": "Neon Drive", "license_id": "LIC-2026-0415", "license_status": "pending"},
+      "owner": "数码组·韩笑",
+      "version": 1,
+      "updated_at": "2026-11-08 14:10"
+    },
+    {
+      "asset_id": "M05",
+      "title": "燕麦杯的三种早餐做法",
+      "type": "video",
+      "duration_sec": 38,
+      "caption": "前一晚备好，早上 3 分钟搞定燕麦杯，三种口味轮着吃。#早餐 #燕麦",
+      "cover_url": "https://assets.example.com/m05/cover-v1.jpg",
+      "tags": ["早餐"],
+      "music": {"track": "Sunny Kitchen", "license_id": "LIC-2026-0520", "license_status": "licensed"},
+      "owner": "生活组·唐棠",
+      "version": 1,
+      "updated_at": "2026-11-10 10:30"
+    },
+    {
+      "asset_id": "M06",
+      "title": "周末露营装备清单（新手版）",
+      "type": "image_text",
+      "duration_sec": null,
+      "caption": "第一次露营带什么？按睡、吃、照明三类列好清单，照着装包就行。#露营 #装备清单",
+      "cover_url": "https://assets.example.com/m06/cover-v2.jpg",
+      "tags": ["露营"],
+      "music": null,
+      "owner": "生活组·唐棠",
+      "version": 2,
+      "updated_at": "2026-11-10 11:00"
+    },
+    {
+      "asset_id": "M07",
+      "title": "健身房跟练 15 分钟",
+      "type": "video",
+      "duration_sec": 900,
+      "caption": "跟着练 15 分钟，热身到拉伸完整一套。#健身",
+      "cover_url": "https://assets.example.com/m07/cover-v1.jpg",
+      "tags": ["健身"],
+      "music": {"track": "Power Up", "license_id": null, "license_status": "none"},
+      "owner": "运动组·白杨",
+      "version": 1,
+      "updated_at": "2026-11-07 18:00"
+    }
+  ]
+}
