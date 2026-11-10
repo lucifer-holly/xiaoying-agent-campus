@@ -1,0 +1,122 @@
+{
+  "generated_at": "2026-11-10T22:33:29+08:00",
+  "model": "qwen3.8-max",
+  "prompt_version": "q1-v2",
+  "runs_per_case": 3,
+  "total": {
+    "passed": 30,
+    "runs": 30
+  },
+  "cases": [
+    {
+      "case": "01-normal-free-slot",
+      "passed": 3,
+      "runs": 3,
+      "paths": {
+        "read_asset → check_rules → query_slots → save_draft → finish": 3
+      },
+      "problems": [],
+      "avg_tokens": 14082,
+      "avg_llm_latency_s": 9.8
+    },
+    {
+      "case": "02-slot-conflict",
+      "passed": 3,
+      "runs": 3,
+      "paths": {
+        "read_asset → check_rules → query_slots → query_slots → save_draft → finish": 3
+      },
+      "problems": [],
+      "avg_tokens": 17999,
+      "avg_llm_latency_s": 13.5
+    },
+    {
+      "case": "03-missing-asset-info",
+      "passed": 3,
+      "runs": 3,
+      "paths": {
+        "read_asset → finish": 3
+      },
+      "problems": [],
+      "avg_tokens": 4911,
+      "avg_llm_latency_s": 3.5
+    },
+    {
+      "case": "04-rule-risk-block",
+      "passed": 3,
+      "runs": 3,
+      "paths": {
+        "read_asset → check_rules → finish": 3
+      },
+      "problems": [],
+      "avg_tokens": 7765,
+      "avg_llm_latency_s": 6.1
+    },
+    {
+      "case": "05-rule-needs-verification",
+      "passed": 3,
+      "runs": 3,
+      "paths": {
+        "read_asset → check_rules → check_rules → query_slots → save_draft → finish": 3
+      },
+      "problems": [],
+      "avg_tokens": 17872,
+      "avg_llm_latency_s": 12.4
+    },
+    {
+      "case": "06-duplicate-submission",
+      "passed": 3,
+      "runs": 3,
+      "paths": {
+        "read_asset → check_rules → query_slots → save_draft → finish | read_asset → check_rules → query_slots → save_draft → finish": 3
+      },
+      "problems": [],
+      "avg_tokens": 28159,
+      "avg_llm_latency_s": 20.2
+    },
+    {
+      "case": "07-save-failure",
+      "passed": 3,
+      "runs": 3,
+      "paths": {
+        "read_asset → check_rules → query_slots → save_draft → save_draft → finish": 3
+      },
+      "problems": [],
+      "avg_tokens": 17132,
+      "avg_llm_latency_s": 12.8
+    },
+    {
+      "case": "08-step-limit",
+      "passed": 3,
+      "runs": 3,
+      "paths": {
+        "read_asset → check_rules → query_slots": 3
+      },
+      "problems": [],
+      "avg_tokens": 7680,
+      "avg_llm_latency_s": 5.4
+    },
+    {
+      "case": "09-save-timeout-after-commit",
+      "passed": 3,
+      "runs": 3,
+      "paths": {
+        "read_asset → check_rules → query_slots → save_draft → save_draft → finish": 3
+      },
+      "problems": [],
+      "avg_tokens": 17450,
+      "avg_llm_latency_s": 13.0
+    },
+    {
+      "case": "10-date-fixed-day-full",
+      "passed": 3,
+      "runs": 3,
+      "paths": {
+        "read_asset → check_rules → query_slots → query_slots → finish": 3
+      },
+      "problems": [],
+      "avg_tokens": 14127,
+      "avg_llm_latency_s": 10.5
+    }
+  ]
+}

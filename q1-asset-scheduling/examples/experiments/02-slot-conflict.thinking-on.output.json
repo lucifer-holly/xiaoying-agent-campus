@@ -1,0 +1,48 @@
+{
+  "request_id": "REQ-1112-001",
+  "status": "needs_confirmation",
+  "status_label": "等待申请人确认",
+  "message": "素材 M01（第 3 版）信息完整，抖音渠道规则检查结论为 pass，无风险提示。但申请的 2026-11-12 18:00 已被 M22「双十一晚会直播预告」占用，当天仅剩 09:00、19:00、21:00 空闲，其中 19:00 离申请时间最近，且未改动日期，符合申请单「日期不能改」的要求。我已按 2026-11-12 19:00 保存待确认草稿 D-2BC37EB1（仅占住时段，尚未进入排期，也不会发布）。请确认是否接受改到 19:00；若不接受，也可改选 09:00 或 21:00，确认后仍需人工在发布系统操作发布。",
+  "draft": {
+    "draft_id": "D-2BC37EB1",
+    "status": "pending_confirmation",
+    "asset_id": "M01",
+    "asset_version": 3,
+    "channel": "douyin",
+    "publish_at": "2026-11-12 19:00",
+    "requested_publish_at": "2026-11-12 18:00",
+    "change_reason": "申请的 2026-11-12 18:00 已被 M22「双十一晚会直播预告」占用；当天空闲时段为 09:00、19:00、21:00，19:00 距申请时间最近（相差 1 小时），且未改动日期，仍符合申请单 date_fixed=true 的要求，也仍属晚间直播预热时段。",
+    "warnings": [],
+    "created_at": "2026-11-10T22:01:51+08:00",
+    "created_in_this_run": true
+  },
+  "schedule": {
+    "requested_publish_at": "2026-11-12 18:00",
+    "draft_publish_at": "2026-11-12 19:00",
+    "changed": true
+  },
+  "review": {
+    "verdict": "pass",
+    "deep_check": false,
+    "findings": [],
+    "resolved": []
+  },
+  "missing_fields": [],
+  "risk_rule_ids": [],
+  "confirmation_question": "申请的 18:00 已被占用，是否同意将 M01 的抖音发布时间改为 2026-11-12 19:00？如不同意，当天可选空闲时段为 09:00 或 21:00（日期不可改）。",
+  "notice": "本 Agent 只保存排期草稿，没有发布能力；草稿需要人工在发布系统确认后才会发布。",
+  "validator": {
+    "corrections": [],
+    "warnings": []
+  },
+  "run": {
+    "llm_mode": "real",
+    "model": "qwen3.8-max",
+    "prompt_version": "q1-v2",
+    "steps_used": 5,
+    "tool_calls_used": 5,
+    "max_steps": 8,
+    "max_tool_calls": 10,
+    "end_reason": "finish"
+  }
+}

@@ -11,10 +11,13 @@
 - [x] 范围已定：**只做 Q1（素材审核与发布排期）**，由主 Agent 在云端全程规划、开发、测试、验收；不使用用户自有服务器（规则不要求部署，部署不加分）
 - [x] 模型已定：阿里云百炼 Qwen3.8 系列（OpenAI 兼容接口，见第 3.1 节）
 - [x] 用户已配置网络密钥与环境变量（见第 3.1 节）
-- [ ] 编写共用骨架（Mock 先跑通）
-- [ ] 分派子 Agent 逐题实现
-- [ ] 真实模型录制 Trace（需要 Key，须在新会话中进行）
-- [ ] 主 Agent 逐题验收 → 选题 → `git subtree split` 导出提交分支
+- [x] 编写共用骨架（Mock 先跑通）
+- [x] Q1 实现（只做 Q1，没有分派子 Agent 逐题实现）
+- [x] 真实模型录制 Trace（10 个用例，qwen3.8-max，提示词 q1-v2）
+- [x] 验收（含独立只读复核与修复）→ `git subtree split` 导出提交分支 `submission`
+- [x] 演示上线：https://xiaoying.gret.me/ ，部署记录见 `DEPLOY_HANDOFF.md`
+
+> 2026-11-10 更新：Q1 已完成。实际执行与本计划的出入（只做 Q1、新增用例 09/10、复核后改为按申请内容做幂等等）记录在 `q1-asset-scheduling/docs/03-evaluation.md` 和 `docs/05-retrospective.md`。
 
 提交约定：commit 不加任何 AI 署名（用户红线）。仓库本地 git 身份为 `lucifer-holly <63133305+lucifer-holly@users.noreply.github.com>`，`commit.gpgsign=false`。新会话中须重新执行：
 

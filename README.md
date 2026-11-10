@@ -7,10 +7,16 @@
 
 | 题号 | 题目 | 目录 | 状态 |
 |---|---|---|---|
-| 1 | 素材审核与发布排期 Agent | `q1-asset-scheduling/` | 未开始 |
-| 2 | 内容任务规划 Agent | `q2-campaign-planning/` | 未开始 |
-| 3 | 企业知识问答 Agent | `q3-knowledge-qa/` | 未开始 |
-| 4 | 短视频脚本 Agent | `q4-video-script/` | 未开始 |
+| 1 | 素材审核与发布排期 Agent | [`q1-asset-scheduling/`](q1-asset-scheduling/) | **已完成，正式提交** |
+| 2 | 内容任务规划 Agent | `q2-campaign-planning/` | 不做（规则只要求一道） |
+| 3 | 企业知识问答 Agent | `q3-knowledge-qa/` | 不做 |
+| 4 | 短视频脚本 Agent | `q4-video-script/` | 不做 |
+
+## Q1 正式提交
+
+- **提交分支**：`submission`，由 `git subtree split --prefix=q1-asset-scheduling` 导出，分支根目录就是项目本身。最终提交的 commit SHA 以该分支的最新提交为准。
+- **评审入口**：[`q1-asset-scheduling/README.md`](q1-asset-scheduling/README.md)（运行命令）、[`docs/03-evaluation.md`](q1-asset-scheduling/docs/03-evaluation.md)（验收对照）、[`examples/`](q1-asset-scheduling/examples/)（真实模型的输入、输出、Trace）。
+- **在线演示**：<https://xiaoying.gret.me/>（回放 + 实时运行；实时运行需要访问口令）。部署记录与运维说明见 [DEPLOY_HANDOFF.md](DEPLOY_HANDOFF.md)。
 
 详细拆解、设计与交接见 [PLAN.md](PLAN.md)。
 
