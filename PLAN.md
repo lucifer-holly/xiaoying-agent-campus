@@ -8,9 +8,9 @@
 - [x] 仓库已创建并推送：`lucifer-holly/xiaoying-agent-campus`（公开）
 - [x] 四道题已拆解（第 2 节）
 - [x] 共用骨架设计已定（第 3 节）
-- [ ] **待用户决定**：做几道题、正式提交哪道（第 5 节）
+- [x] 范围已定：**只做 Q1（素材审核与发布排期）**，由主 Agent 在云端全程规划、开发、测试、验收；不使用用户自有服务器（规则不要求部署，部署不加分）
 - [x] 模型已定：阿里云百炼 Qwen3.8 系列（OpenAI 兼容接口，见第 3.1 节）
-- [ ] **待用户提供**：`LLM_API_KEY` 加入环境 Network secrets（见第 5 节）
+- [x] 用户已配置网络密钥与环境变量（见第 3.1 节）
 - [ ] 编写共用骨架（Mock 先跑通）
 - [ ] 分派子 Agent 逐题实现
 - [ ] 真实模型录制 Trace（需要 Key，须在新会话中进行）
@@ -21,6 +21,18 @@
 ```bash
 git config user.name "lucifer-holly" && git config user.email "63133305+lucifer-holly@users.noreply.github.com" && git config commit.gpgsign false
 ```
+
+## 0.1 新会话执行顺序（Q1）
+
+1. 恢复 git 身份配置（见上），`git pull`
+2. 冒烟测试：用 `openai` SDK 对 `LLM_BASE_URL` 发一个极短请求 + 一个带工具的请求，确认认证注入与 function calling 可用（失败按第 3.1 节处理）
+3. 在 `q1-asset-scheduling/` 实现骨架（第 3 节）+ 业务工具 + 合成数据 + 校验器
+4. 单元测试与 Mock 流程测试全绿
+5. 真实模型录制全部验收用例 Trace；未走出预期路径时调整提示词并如实记录迭代过程
+6. 写 docs/01–05、README；更新根 README 进度
+7. 主 Agent 自验收（对照第 2 节 Q1 验收点 + 根 README 清单），可派一个独立子 Agent 只读复核“越权发布 / 虚报保存成功 / 防重复”
+8. `git subtree split` 导出提交分支并推送，把 SHA 交给用户
+9. 实际用时、AI 使用范围如实写入 docs/04、docs/05
 
 ## 1. 总原则
 
