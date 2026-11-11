@@ -15,6 +15,8 @@
 | 代码边界与校验器 | [`src/domain/scheduling.py`](src/domain/scheduling.py)、[`src/domain/validator.py`](src/domain/validator.py) |
 | 测试结果 | [`examples/test-results.txt`](examples/test-results.txt) |
 | 演示（补充体验，不替代命令行） | 回放页：<https://lucifer-holly.github.io/xiaoying-agent-campus/demo/>（静态，也可本地双击 [`demo/index.html`](demo/index.html)）；实时演示：<https://xiaoying.gret.me/>，说明见下方“演示” |
+| 自己改输入复测：更换占用时段、重复提交 | 下方“评审自测” |
+| AI 辅助范围与本人贡献 | [`docs/04-ai-usage.md`](docs/04-ai-usage.md) |
 | 需求 / 方案 / 评估 / AI 使用 / 复盘 | [`docs/`](docs/) |
 
 ## 环境与安装
@@ -79,6 +81,47 @@ python src/main.py --input examples/06-duplicate-submission.input.json --llm rea
 python scripts/record_examples.py --llm real      # 重录 examples/ 下全部用例
 python scripts/eval_stability.py --runs 3         # 每个用例重复实跑 3 次，写 examples/stability-report.json
 python -m pytest -v                               # 单元测试 + Mock 流程 + 对已录制真实 Trace 的断言
+```
+
+## 评审自测：更换占用时段并重复提交
+
+下面三组操作都基于用例 02（M01 申请 11/12 18:00，日期不能改）。命令里用 `--llm real` 看真实模型的决策，换成 `--llm mock` 也能离线跑通。预期结果按业务规则给出，已在 Mock 下验证；真实模型的表现以实际运行为准。
+
+当天抖音的时段是 09:00、12:00、18:00、19:00、20:00、21:00，其中 12:00（M21）、18:00（M22）、20:00（M23）已被占用。
+
+**1. 换一个被占用的申请时段（不改数据）**：把申请时间改成 12:00，离它最近的空闲时段是 09:00。
+
+```bash
+python -c "import json; d=json.load(open('examples/02-slot-conflict.input.json')); d['case']='self-1200'; d['request']['request_id']='REQ-SELF-1200'; d['request']['publish_at']='2026-11-12 12:00'; d.pop('expected'); json.dump(d, open('self-1200.input.json','w'), ensure_ascii=False, indent=2)"
+python src/main.py --input self-1200.input.json --llm real
+```
+
+预期：`needs_confirmation`，草稿改到 09:00 并标记待确认，日期不变。
+
+**2. 改变日历的占用情况**：在发布日历里把 19:00 也占上，原来的 19:00 就不能用了，离 18:00 最近的空闲时段变成 21:00。
+
+```bash
+python -c "import json; p='data/schedule.json'; d=json.load(open(p)); d['bookings'].append({'channel':'douyin','date':'2026-11-12','time':'19:00','asset_id':'M99','title':'评审自测占位'}); json.dump(d, open(p,'w'), ensure_ascii=False, indent=2)"
+python src/main.py --input examples/02-slot-conflict.input.json --llm real
+```
+
+预期：`needs_confirmation`，草稿改到 21:00 并标记待确认。
+
+**3. 在第 2 步的基础上重复提交**：草稿库落盘，同一申请分两次运行。
+
+```bash
+rm -f state/self-test.json
+python src/main.py --input examples/02-slot-conflict.input.json --llm real --store state/self-test.json
+python src/main.py --input examples/02-slot-conflict.input.json --llm real --store state/self-test.json
+```
+
+预期：两次的草稿编号相同，第二次 `created_in_this_run=false`；`state/self-test.json` 里只有一份草稿。
+
+**测完恢复数据**：第 2 步改过 `data/schedule.json`，不恢复的话，`tests/test_examples.py` 里 02 用例的 Mock 流程测试和录制重放都会失败。
+
+```bash
+git checkout -- data/schedule.json
+rm -f self-1200.input.json state/self-test.json
 ```
 
 ## 用例一览
