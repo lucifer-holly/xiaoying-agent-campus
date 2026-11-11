@@ -1,7 +1,7 @@
 # 部署交接：xiaoying.gret.me（Q1 演示）
 
 > 读者：在本机运行的 Claude Code，或本人。
-> 演示已上线：首次部署 2026-11-10 22:31，最近一次部署 2026-11-11 09:12（版本 `979638e`，已验证回滚）。
+> 演示已上线：首次部署 2026-11-10 22:31，最近一次部署 2026-11-11 09:37（版本 `37e382e`：页面改版、实时运行取消口令；回滚已于 09:12 验证）。
 > 本文件记录实际做了什么、日常怎么运维、怎么回滚、怎么做健康检查。
 
 ## 0. 红线（任何操作前先读）
@@ -93,7 +93,7 @@ ssh aliyun "rm -rf /srv/xiaoying-agent"
 ## 7. 提交 SHA
 
 - 正式提交用 `submission` 分支，它由 `git subtree split --prefix=q1-asset-scheduling` 导出，分支根目录就是项目。
-- 当前最终 SHA：`397a5c9c0cc044dfb1f40e8739fc4db3eb803e39`。
+- 当前最终 SHA：`9c68f47fd79cfbfcfe0387e2fbfd1c8eb8fe6413`。
 - 之后如果又改了 `q1-asset-scheduling/`（例如在 docs/04 补“本人修改记录”），在 main 上提交后重新导出：
 
 ```bash
