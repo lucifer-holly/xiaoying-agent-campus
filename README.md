@@ -3,7 +3,7 @@
 | 提交项 | 内容 |
 |---|---|
 | 题号 | **1（素材审核与发布排期 Agent）** |
-| 仓库 | <https://github.com/lucifer-holly/xiaoying-agent-campus>（ `main` 分支） |
+| 仓库 | <https://github.com/lucifer-holly/xiaoying-agent-campus>（`main`分支） |
 | 最终 commit SHA | 以 `main` 分支的最新提交为准 |
 
 运营提交一张排期申请单（素材、渠道、时间、硬性要求），Agent 用 ReAct 循环依次读取素材、做规则检查、查询发布时段，最后**只保存排期草稿**：时段被占用时改到当天最近的空闲时段并标记待确认，信息缺失、规则风险、工具失败时停下来，如实说明原因。
