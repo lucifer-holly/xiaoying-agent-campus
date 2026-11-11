@@ -23,8 +23,25 @@
   var CHANNEL = { douyin: "抖音", wechat_channels: "视频号", xiaohongshu: "小红书" };
   var DRAFT_STATUS = { scheduled_draft: "已排期草稿（未发布）", pending_confirmation: "待确认草稿（未发布）" };
   var COMPARE_PAIRS = [
-    { a: "01-normal-free-slot", b: "02-slot-conflict", note: "两张申请单只差日期（11/13 与 11/12）。第 3 步查到的 18:00 状态不同，模型此后走了不同的路径。" },
-    { a: "02-slot-conflict.q1-v1", b: "02-slot-conflict", note: "同一用例、两版提示词。q1-v1 下模型找到 19:00 后没有先保存待确认草稿，等待确认期间时段可能被占；q1-v2 明确了“待确认草稿只是先占位”。" }
+    {
+      a: "01-normal-free-slot", b: "02-slot-conflict",
+      checkpoint: "验收点：至少两条真实模型执行路径，体现模型根据不同工具结果调整动作",
+      title: "只差一个日期，模型走了两条路",
+      subtitle: "两张申请单只有日期不同。第 3 步查到的 18:00，一边空闲、一边已被占用；从这里开始，每一步都是模型根据工具结果自己决定的。",
+      labelA: "11/13 · 18:00 空闲", labelB: "11/12 · 18:00 已被占用",
+      forkNote: "同样查 18:00，A 查到“空闲”，B 查到“已被占用”，模型从这里开始做不同的决定。",
+      takeaway: "代码里没有“被占就改时间”这样的分支。A 看到空闲，就按申请时间直接保存；B 看到被占，先查当天全部时段，再选离 18:00 最近的 19:00 存成待确认草稿，请申请人确认。代码只负责兜底：时间一改，草稿必须是待确认状态；申请单写明日期不能改，就不允许改日期。"
+    },
+    {
+      a: "02-slot-conflict.q1-v1", b: "02-slot-conflict",
+      checkpoint: "迭代记录：没走出预期路径时调整提示词，并保留迭代前的原始运行记录",
+      title: "同一张申请，两版提示词",
+      subtitle: "申请单和工具返回完全相同，唯一的变量是提示词版本。对比能看出这次提示词改动改变了模型的哪一个决定。",
+      labelA: "提示词 q1-v1（迭代前）", labelB: "提示词 q1-v2（现在）",
+      change: "q1-v2 在第 3 条里补了一句：时段被占时“直接用 save_draft 保存为待确认草稿……待确认草稿只是先占住这个时段，申请人确认前不会进入排期，所以保存它不需要事先征得同意”。",
+      forkNote: "前 4 步完全一样；到第 5 步，A 直接去问申请人，B 先把 19:00 存成待确认草稿。",
+      takeaway: "q1-v1 下模型找到 19:00 后没有先占住时段，等待确认期间 19:00 可能被别人排走；q1-v2 讲清楚了“待确认草稿只是先占位”，模型就先保存待确认草稿，再请申请人确认。改完提示词后全部用例重新录制，回放里的 02 就是 q1-v2 的结果。"
+    }
   ];
   var ICONS = {
     file: '<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h4"/>',
@@ -52,7 +69,9 @@
     list: '<path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/>',
     timer: '<circle cx="12" cy="13" r="7.5"/><path d="M12 9v4l2.5 1.5M9.5 3h5"/>',
     compare: '<rect x="3" y="4" width="7" height="16" rx="1.5"/><rect x="14" y="4" width="7" height="16" rx="1.5"/>',
-    expand: '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>'
+    expand: '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>',
+    branch: '<circle cx="6" cy="5" r="2"/><circle cx="6" cy="19" r="2"/><circle cx="18" cy="9" r="2"/><path d="M6 7v10"/><path d="M18 11c0 4-6 3.5-11.2 6.4"/>',
+    bulb: '<path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.6.4 1 1.1 1 1.8V16h5v-.3c0-.7.4-1.4 1-1.8A6 6 0 0 0 12 3z"/>'
   };
   var timers = [];
 
@@ -340,11 +359,7 @@
       );
     }
     box.appendChild(el("h2", { class: "list-title", text: "验收用例 · " + DATA.cases.length }));
-    DATA.cases.forEach(function (c) { box.appendChild(item(c)); });
-    if (DATA.iterations && DATA.iterations.length) {
-      box.appendChild(el("h2", { class: "list-title", text: "提示词迭代记录" }));
-      DATA.iterations.forEach(function (c) { box.appendChild(item(c, " iteration")); });
-    }
+    DATA.cases.forEach(function (c) { box.appendChild(item(c)); });  // 提示词迭代记录只在“模型如何应变”里对比展示
   }
   function selectCase(id, keepView) {
     var entry = findCase(id) || DATA.cases[0];
@@ -356,43 +371,119 @@
     showView("replay");
   }
 
-  // ---- 路径对比 -----------------------------------------------------------------
-  function compactSteps(trace, diverge) {
-    return el("ol", { class: "compact" }, trace.steps.map(function (s, i) {
-      var meta = TOOLS[s.tool] || { label: "—", icon: "pause" };
-      var keys = Object.keys(s.args || {}).filter(function (k) { return ["time", "date", "publish_at", "requires_confirmation", "deep_check", "status"].indexOf(k) >= 0; });
-      return el("li", { class: "tool-" + (s.tool || "none") + (s.ok ? "" : " err") + (diverge !== null && i >= diverge ? " diverged" : "") },
+  // ---- 模型如何应变（两次真实运行的分叉对比）---------------------------------------
+  function sameStep(sa, sb) {
+    return !!(sa && sb && sa.tool === sb.tool && sa.result_summary === sb.result_summary &&
+      JSON.stringify(sa.args || {}) === JSON.stringify(sb.args || {}));
+  }
+  function keyArgs(step) {
+    var keys = ["asset_id", "date", "time", "publish_at", "requires_confirmation", "deep_check", "status"];
+    return keys.filter(function (k) { return step.args && step.args[k] !== undefined; }).map(function (k) { return k + " = " + raw(step.args[k]); }).join("   ");
+  }
+  function requestRows(ra, rb, pa, pb) {
+    var rows = [
+      ["素材", ra.asset_id, rb.asset_id],
+      ["渠道", CHANNEL[ra.channel] || ra.channel, CHANNEL[rb.channel] || rb.channel],
+      ["申请时间", ra.publish_at, rb.publish_at],
+      ["日期不能改", ra.constraints && ra.constraints.date_fixed ? "是" : "否", rb.constraints && rb.constraints.date_fixed ? "是" : "否"],
+      ["提示词版本", pa, pb]
+    ];
+    return rows.map(function (r) { return { label: r[0], a: fmt(r[1]), b: fmt(r[2]), diff: fmt(r[1]) !== fmt(r[2]) }; });
+  }
+  function sideTicket(side, label, rows, key, entry) {
+    return el("div", { class: "cmp-ticket side-" + side },
+      el("div", { class: "cmp-ticket-head" }, el("span", { class: "side-badge", text: side.toUpperCase() }), el("span", { class: "cmp-ticket-label", text: label })),
+      el("dl", { class: "cmp-rows" }, rows.map(function (r) {
+        return el("div", { class: "cmp-row" + (r.diff ? " diff" : "") },
+          el("dt", { text: r.label }), el("dd", null, r[key], r.diff ? el("span", { class: "diff-chip", text: "不同" }) : null));
+      })),
+      el("button", { type: "button", class: "link-btn", onclick: function () { selectCase(entry.case); window.scrollTo({ top: 0, behavior: "smooth" }); } }, "看这次运行的完整回放", icon("arrow"))
+    );
+  }
+  function slotBadge(step) {  // 只读 observation 做一个中文状态标记，原始摘要文字不改
+    var obs = step.observation;
+    if (step.tool !== "query_slots" || !obs || !obs.ok || !obs.data) return null;
+    var d = obs.data;
+    if (d.free_slots) return el("span", { class: "slot-badge tone-info" }, icon("calendar"), "当天空闲 " + d.free_slots.length + " 个" + (d.free_slots.length ? "：" + d.free_slots.join("、") : ""));
+    var s0 = d.slots && d.slots[0];
+    if (!s0) return null;
+    return s0.status === "free"
+      ? el("span", { class: "slot-badge tone-ok" }, icon("check"), s0.time + " 空闲")
+      : el("span", { class: "slot-badge tone-warn" }, icon("x"), s0.time + " 已被占用");
+  }
+  function trunkStep(step) {
+    var meta = TOOLS[step.tool] || { label: "—", icon: "pause" };
+    return el("li", { class: "trunk-step tool-" + (step.tool || "none") },
+      icon(meta.icon, "tool-icon"),
+      el("div", { class: "trunk-body" },
+        el("div", { class: "trunk-title" }, el("span", { class: "step-no", text: "第 " + step.step + " 步" }), el("strong", { text: meta.label }), el("code", { text: step.tool }), slotBadge(step)),
+        el("p", { class: "trunk-result", text: step.result_summary })),
+      el("span", { class: "same-chip" }, icon("check"), "两边相同"));
+  }
+  function branchStep(step, isFork) {
+    var meta = TOOLS[step.tool] || { label: "没有调用工具", icon: "pause" };
+    var args = keyArgs(step);
+    return el("li", { class: "bstep tool-" + (step.tool || "none") + (isFork ? " is-fork" : "") + (step.ok ? "" : " failed") },
+      el("div", { class: "bstep-head" },
         icon(meta.icon, "tool-icon"),
-        el("span", { class: "c-args", text: (s.tool || "—") + (keys.length ? "  " + keys.map(function (k) { return k + "=" + raw(s.args[k]); }).join("  ") : "") }),
-        el("span", { class: "c-result", text: s.result_summary })
-      );
-    }));
+        el("span", { class: "tool-names" }, el("span", { class: "tool-cn", text: meta.label }), el("code", { class: "tool-en", text: step.tool || "—" })),
+        el("span", { class: "step-no", text: "第 " + step.step + " 步" })),
+      args ? el("p", { class: "bstep-args", text: args }) : null,
+      slotBadge(step),
+      el("p", { class: "bstep-result" + (isFork ? " fork-result" : "") }, isFork ? el("span", { class: "fork-chip", text: step.tool === "finish" ? "提交结果" : "工具返回" }) : null, step.result_summary),
+      step.decision_note ? el("p", { class: "bstep-note" }, icon("spark"), el("span", null, el("strong", { text: "模型的理由：" }), step.decision_note)) : null);
+  }
+  function branchOutcome(out) {
+    var s = statusOf(out.status);
+    var d = out.draft;
+    return el("div", { class: "branch-outcome tone-" + s.tone },
+      icon(s.icon, "final-icon"),
+      el("div", null,
+        el("p", { class: "final-kicker", text: "最终结果" }),
+        el("strong", { text: s.label }),
+        el("p", { class: "small", text: d ? "草稿 " + d.draft_id + " · " + d.publish_at + " · " + (DRAFT_STATUS[d.status] || d.status) : "没有保存草稿" })));
   }
   function renderCompare() {
     var view = document.getElementById("view-compare");
-    view.replaceChildren();
+    view.replaceChildren(el("header", { class: "cmp-intro" },
+      el("h2", { text: "模型如何应变" }),
+      el("p", { text: "把两次真实运行并排放在一起：输入只差一个条件，看模型在哪一步、因为什么做出了不同的决定。每张卡片里的“模型的理由”是模型调用工具时自己写下的一句话。" })));
     COMPARE_PAIRS.forEach(function (pair) {
       var A = findCase(pair.a), B = findCase(pair.b);
       if (!A || !B) return;
       var ta = runsOf(A.trace)[0], tb = runsOf(B.trace)[0];
-      var diverge = null;
-      for (var i = 0; i < Math.max(ta.steps.length, tb.steps.length); i++) {
-        var sa = ta.steps[i], sb = tb.steps[i];
-        if (!sa || !sb || sa.result_summary !== sb.result_summary || sa.tool !== sb.tool) { diverge = i; break; }
-      }
-      function column(entry, trace) {
-        var out = runsOf(entry.output)[0];
-        return el("div", { class: "card compare-col" },
-          el("p", { class: "detail-kicker" }, el("span", { class: "case-no", text: caseNo(entry) }), el("code", { text: "提示词 " + trace.prompt_version })),
-          el("h3", { text: splitTitle(entry)[0] }),
-          el("p", { class: "muted small", text: "申请：" + entry.request.asset_id + " · " + (CHANNEL[entry.request.channel] || entry.request.channel) + " · " + entry.request.publish_at }),
-          compactSteps(trace, diverge),
-          el("div", { class: "compare-final" }, pill(out.status), el("span", { class: "small", text: out.draft ? out.draft.publish_at + " · " + (DRAFT_STATUS[out.draft.status] || out.draft.status) : "未保存草稿" }))
-        );
-      }
-      view.appendChild(el("section", { class: "compare" },
-        el("p", { class: "compare-note" }, icon("compare"), el("span", { text: pair.note + (diverge !== null ? "（高亮部分从第 " + (diverge + 1) + " 步开始不同）" : "") })),
-        el("div", { class: "compare-grid" }, column(A, ta), column(B, tb))
+      var oa = runsOf(A.output)[0], ob = runsOf(B.output)[0];
+      var fork = 0;
+      while (fork < Math.min(ta.steps.length, tb.steps.length) && sameStep(ta.steps[fork], tb.steps[fork])) fork++;
+      var rows = requestRows(A.request, B.request, ta.prompt_version, tb.prompt_version);
+      var trunk = ta.steps.slice(0, fork);
+      var forkStepNo = fork + 1;
+      var branch = function (side, label, trace, out) {
+        return el("div", { class: "branch side-" + side },
+          el("div", { class: "branch-head" }, el("span", { class: "side-badge", text: side.toUpperCase() }), el("span", { text: label })),
+          el("ol", { class: "branch-steps" }, trace.steps.slice(fork).map(function (s, i) { return branchStep(s, i === 0); })),
+          branchOutcome(out));
+      };
+      view.appendChild(el("section", { class: "cmp card" },
+        el("header", { class: "cmp-head" },
+          el("span", { class: "tag tag-brand" }, icon("flag"), pair.checkpoint),
+          el("h3", { text: pair.title }),
+          el("p", { class: "muted", text: pair.subtitle })),
+        el("div", { class: "cmp-section-title", text: "① 输入：两次运行的申请单" }),
+        el("div", { class: "cmp-inputs" },
+          sideTicket("a", pair.labelA, rows, "a", A),
+          el("div", { class: "cmp-vs", text: "VS" }),
+          sideTicket("b", pair.labelB, rows, "b", B)),
+        pair.change ? el("p", { class: "cmp-change" }, icon("edit"), el("span", { text: pair.change })) : null,
+        el("div", { class: "cmp-section-title", text: "② 过程：前 " + fork + " 步相同，第 " + forkStepNo + " 步开始分叉" }),
+        trunk.length ? el("ol", { class: "trunk" }, trunk.map(trunkStep)) : null,
+        el("div", { class: "fork-banner" }, icon("branch"), el("span", null, el("strong", { text: "分叉点 · 第 " + forkStepNo + " 步  " }), pair.forkNote)),
+        el("div", { class: "fork-lines", "aria-hidden": "true" }),
+        el("div", { class: "branches" },
+          branch("a", pair.labelA, ta, oa),
+          branch("b", pair.labelB, tb, ob)),
+        el("div", { class: "cmp-section-title", text: "③ 结论" }),
+        el("div", { class: "cmp-takeaway" }, icon("bulb"), el("p", { text: pair.takeaway }))
       ));
     });
   }
