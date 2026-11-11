@@ -13,6 +13,8 @@
 | 录制一致性 | `test_recorded_tool_calls_replay_identically_through_current_code`：把录制里模型发出的每个工具调用按顺序喂给当前代码重放 | 录制和当前代码对得上；代码改了没重录，这条测试会失败 | 10/10 |
 | 稳定性 | `python scripts/eval_stability.py --runs 3`，结果见 `examples/stability-report.json` | 同一输入下，模型的决策是否稳定 | 30/30 |
 | 补充说明 | `python scripts/eval_instructions.py --runs 3`，结果见 `examples/instructions-report.json` | 偏好能改变模型在规则允许范围内的选择；越权要求不会被执行（第 9 节） | 27/27 |
+| 人工测试 | 本人和 AI 一起：亲手运行测试和用例，在回放页和线上演示页上逐个场景操作；补充说明的真实运行见第 9 节 | 命令、页面和录制对得上，补上自动化测试覆盖不到的实际使用 | 本人在测试基础上提出的三项改进见 docs/04“本人修改记录” |
+| 评审自测 | README“评审自测”：换一个被占用的申请时段、在日历里改变占用情况、改完后重复提交 | 换了输入，模型的动作是否随之调整，防重复是否仍然成立 | 预期结果已在 Mock 下验证；真实模型以评审实际运行为准 |
 
 完整测试输出见 [`examples/test-results.txt`](../examples/test-results.txt)（`python -m pytest -v`，82 个测试全部通过）。
 
@@ -98,7 +100,7 @@
 | 4 | 模型返回结构异常（空 choices）会让程序崩溃，丢失输出和 Trace | 统一转成 `llm_error`，照常输出 |
 | 5 | `missing_fields`、`risk_rule_ids` 会采信模型自报 | 只来自工具结果 |
 | 6 | `--max-steps 0` 被悄悄当成默认值 | 参数必须是正整数 |
-| 7 | test-results、docs/03、docs/05、用时记录缺失；docs/04 有待填写项 | 已补齐；docs/04 的“本人修改记录”按考核要求必须由本人填写，保持待填写 |
+| 7 | test-results、docs/03、docs/05、用时记录缺失；docs/04 有待填写项 | 已补齐；docs/04 的“本人修改记录”已由本人补充（节点可视化、数据接入入口、补充说明） |
 | 8 | “日期不能改且当天排满”没有真实录制 | 新增用例 10 并录制 |
 | 9 | 提示词版本号不覆盖工具说明 | Trace 记录工具定义指纹 `tools_version`，测试比对 |
 
