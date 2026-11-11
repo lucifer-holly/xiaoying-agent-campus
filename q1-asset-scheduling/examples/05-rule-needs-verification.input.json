@@ -1,6 +1,6 @@
 {
   "case": "05-rule-needs-verification",
-  "title": "规则待补查：M04 音乐授权显示审批中，补查版权库通过后再排期",
+  "title": "音乐授权待核实：M04 的音乐授权显示审批中，先查版权库，确认有效再排期",
   "covers": ["规则风险", "发现风险 → 补查（deep_check）→ 通过后继续"],
   "request": {
     "request_id": "REQ-1113-004",

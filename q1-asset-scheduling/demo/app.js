@@ -115,16 +115,14 @@
 
   // ---- 顶部指标与工作方式 ----------------------------------------------------
   function renderStats() {
-    var stab = DATA.stability;
     var items = [
-      ["真实模型", DATA.model || "—"],
-      ["验收用例", DATA.cases.length + " 个"],
-      ["稳定性（每例 " + (stab ? stab.runs_per_case : "?") + " 次）", stab ? stab.passed + " / " + stab.runs : "—"],
-      ["自动化测试", DATA.tests_passed ? DATA.tests_passed + " 项通过" : "—"]
+      ["模型", DATA.model || "—", "阿里云百炼 · OpenAI 兼容接口 · 关闭思考模式"],
+      ["技术路线", "ReAct 循环 + Function Calling", "Python 3.10+，只依赖 openai SDK，不用 Agent 框架；硬约束写在工具层和输出校验器里"],
+      ["验收用例", DATA.cases.length + " 个，均为真实模型录制", "正常排期、信息不全、规则风险、时段冲突、工具失败、重复提交、步数上限"]
     ];
     var box = document.getElementById("stats");
     box.replaceChildren.apply(box, items.map(function (it) {
-      return el("li", null, el("span", { class: "stat-label", text: it[0] }), el("span", { class: "stat-value", text: it[1] }));
+      return el("li", null, el("span", { class: "stat-label", text: it[0] }), el("span", { class: "stat-value", text: it[1] }), el("span", { class: "stat-sub", text: it[2] }));
     }));
     document.getElementById("brand-mark").appendChild(icon("calendarCheck"));
   }
@@ -406,7 +404,7 @@
     var intro = el("section", { class: "card live-intro" }, icon("bolt"), el("div", null,
       el("h3", { text: "用真实模型现场跑一次" }),
       el("ul", null,
-        el("li", { text: "选一个场景直接运行；模型 " + (health.model || "—") + "，通常 5~25 秒。" }),
+        el("li", { text: "选一个场景直接运行，可以先改申请单；模型 " + (health.model || "—") + "，通常 5~25 秒。" }),
         el("li", { text: "每次运行使用独立的内存草稿库，只读合成数据，只保存草稿，不会真实发布。" }),
         el("li", { text: "按 IP 限流：" + health.quota.per_ip + "；今天已用 " + health.quota.used_today + " / " + health.quota.daily_limit + " 次，超限时自动切回回放。" })
       )));
@@ -424,15 +422,16 @@
       note: el("input", { id: "f-note", maxlength: "200", placeholder: "可选" }),
       fault: el("select", { id: "f-fault" }, [["", "无"], ["error", "save_draft 一直失败"], ["error_once", "save_draft 第一次失败"], ["timeout_after_commit", "save_draft 超时但已写入"]].map(function (o) { return el("option", { value: o[0], text: o[1] }); })),
       repeat: el("input", { id: "f-repeat", type: "checkbox" }),
-      steps: el("input", { id: "f-steps", type: "number", min: "1", max: "8", value: "8" }),
       code: el("input", { id: "f-code", type: "password", autocomplete: "off" })
     };
     var datalist = el("datalist", { id: "asset-ids" }, ["M01", "M02", "M03", "M04", "M05", "M06", "M07"].map(function (a) { return el("option", { value: a }); }));
-    var current = DATA.cases[0] ? DATA.cases[0].case : null;
+    // 实时运行不提供“步数上限”场景（用例 08 只在回放里展示）
+    var liveCases = DATA.cases.filter(function (c) { return !(c.options && c.options.max_steps); });
+    var current = liveCases[0] ? liveCases[0].case : null;
 
     // 场景卡片
     var picker = el("div", { class: "scenario-grid", role: "radiogroup", "aria-label": "选择场景" });
-    DATA.cases.forEach(function (c) {
+    liveCases.forEach(function (c) {
       var t = splitTitle(c);
       var card = el("button", { type: "button", class: "scenario", role: "radio", "aria-checked": "false", "data-case": c.case, onclick: function () { choose(c.case); } },
         el("span", { class: "case-no", text: caseNo(c) }),
@@ -448,7 +447,7 @@
     function check(label, input, hint) {
       return el("label", { class: "field field-check" }, input, el("span", null, el("span", { class: "check-label", text: label }), hint ? el("span", { class: "field-hint", text: hint }) : null));
     }
-    var editBox = el("details", { class: "fold" },
+    var editBox = el("details", { class: "fold", open: true },
       el("summary", null, icon("edit"), "修改申请单"),
       el("div", { class: "fold-grid" }, field("素材 ID", f.asset), datalist, field("渠道", f.channel), field("日期", f.date), field("时段", f.time),
         check("日期不能改", f.fixed, "勾选后 Agent 不会擅自改到其他日期"), field("备注（可选）", f.note)));
@@ -456,8 +455,7 @@
       el("summary", null, icon("list"), "高级：测试开关（选场景时已自动设置）"),
       el("div", { class: "fold-grid" },
         field("故障注入", f.fault, "模拟保存草稿时的存储故障"),
-        check("连续提交两次", f.repeat, "同一申请提交两次，验证只产生一份草稿"),
-        field("步数上限", f.steps, "模型最多走几步，默认 8；设成 3 可看到触顶")));
+        check("连续提交两次", f.repeat, "同一申请提交两次，验证只产生一份草稿")));
 
     function refresh() {
       var parts = [
@@ -470,7 +468,6 @@
       var tags = [];
       if (f.fault.value) tags.push(el("span", { class: "tag tag-fault" }, icon("alert"), "故障注入：" + f.fault.options[f.fault.selectedIndex].text));
       if (f.repeat.checked) tags.push(el("span", { class: "tag tag-brand" }, icon("repeat"), "连续提交两次"));
-      if (Number(f.steps.value) !== 8) tags.push(el("span", { class: "tag" }, icon("list"), "步数上限 " + f.steps.value));
       knobs.replaceChildren.apply(knobs, tags);
       knobs.hidden = !tags.length;
     }
@@ -484,11 +481,10 @@
       f.fixed.checked = !!(r.constraints && r.constraints.date_fixed); f.note.value = r.note || "";
       f.fault.value = (c.fault_injection && c.fault_injection.save_draft) || "";
       f.repeat.checked = ((c.options && c.options.repeat) || 1) > 1;
-      f.steps.value = String((c.options && c.options.max_steps) || 8);
       Array.prototype.forEach.call(picker.children, function (b) { b.setAttribute("aria-checked", b.getAttribute("data-case") === id ? "true" : "false"); });
       refresh();
     }
-    [f.asset, f.channel, f.date, f.time, f.fixed, f.fault, f.repeat, f.steps].forEach(function (input) {
+    [f.asset, f.channel, f.date, f.time, f.fixed, f.fault, f.repeat].forEach(function (input) {
       input.addEventListener("input", refresh);
       input.addEventListener("change", refresh);
     });
@@ -514,7 +510,7 @@
           note: f.note.value, constraints: { date_fixed: f.fixed.checked }
         },
         fault_injection: f.fault.value ? { save_draft: f.fault.value } : {},
-        repeat: f.repeat.checked ? 2 : 1, max_steps: Number(f.steps.value) || 8
+        repeat: f.repeat.checked ? 2 : 1
       };
       if (health.access_code_required) payload.access_code = f.code.value;
       button.disabled = true;

@@ -1,6 +1,6 @@
 {
   "case": "06-duplicate-submission",
-  "title": "重复提交：同一申请连续提交两次（共用草稿库），只产生一份草稿",
+  "title": "重复提交只存一份：同一申请连续提交两次（共用草稿库），只产生一份草稿",
   "covers": ["重复提交", "save_draft 按内容哈希幂等"],
   "request": {
     "request_id": "REQ-1114-001",
