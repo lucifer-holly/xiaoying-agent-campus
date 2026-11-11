@@ -1,3 +1,8 @@
+# 密钥：只提交 .env.example，绝不提交 .env
+.env
+.env.*
+!.env.example
+
 # Python
 __pycache__/
 *.py[cod]
@@ -7,15 +12,12 @@ __pycache__/
 .ruff_cache/
 build/
 dist/
-
-# 虚拟环境
 .venv/
 venv/
 
-# 密钥：只提交 .env.example，绝不提交 .env
-.env
-.env.*
-!.env.example
+# 本地运行产物（examples/ 里的是正式录制结果，会提交）
+runs/
+state/
 
 # 编辑器 / 系统
 .idea/

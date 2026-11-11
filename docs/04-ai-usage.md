@@ -16,7 +16,7 @@
 | 提示词 | 修改 AI 起草的提示词，用真实模型多轮复测，再按结果修改 | 起草系统提示词和补充说明的前言 | `src/agent/prompts.py`；迭代过程见 docs/03 第 5、9 节，docs/02 第 5 节 |
 | 测试 | 和 AI 一起测试：亲手运行测试和用例，在回放页和线上页面上实际操作各个场景，一起排查发现的问题 | 编写自动化测试（84 个），用真实模型录制 10 个验收用例，做稳定性评测（30/30）和补充说明评测（27/27）；先后两次另开只读复核会话查缺陷 | `tests/`、`examples/test-results.txt`、`examples/stability-report.json`、`examples/instructions-report.json`；复核见 docs/03 第 6 节 |
 | 文档 | 审阅文档，提出修改意见 | 根据实际运行结果和提交记录，整理出 README 和 `docs/01–05` | `README.md`、`docs/` |
-| 部署 | 配置云服务器环境、模型 API Key（云端会话的网络密钥 + 服务器本地 `.env`），配置域名 `xiaoying.gret.me` 和 DNS 解析 | 编写部署脚本、Caddy 站点配置和 systemd 服务；经我授权，在本机通过 SSH 完成最终部署（约束：不得改动同一台服务器上已有的服务） | `deploy/`、`scripts/deploy.sh`、`../DEPLOY_HANDOFF.md` |
+| 部署 | 配置云服务器环境、模型 API Key（云端会话的网络密钥 + 服务器本地 `.env`），配置域名 `xiaoying.gret.me` 和 DNS 解析 | 编写部署脚本、Caddy 站点配置和 systemd 服务；经我授权，在本机通过 SSH 完成最终部署（约束：不得改动同一台服务器上已有的服务） | `deploy/`、`scripts/deploy.sh`、`docs/DEPLOY_HANDOFF.md` |
 | 后续功能 | 提出三项改进：节点可视化、素材 / 数据接入入口、Agent 后端接收申请人的补充说明。我定下需求和边界，实现后亲自修改、测试（见下一节） | 按我的需求实现，代码同样用 Vibe Coding 方式生成 | 提交 `93b409f`、`1aea74a`、`58440d6`、`477bcfd` |
 
 ## 本人修改记录
