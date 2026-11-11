@@ -21,22 +21,21 @@
 | 服务 | `xiaoying-agent.service`：User=caddy，只监听 `127.0.0.1:8710`；`ProtectSystem=strict`，只有 `state/` 可写；`/srv/shuling`、`/var/lib/caddy`、`/etc/caddy` 对它不可见；`MemoryMax=300M`（实际约 40M）；`systemd-analyze security` 评分 4.6 |
 | 目录 | `/srv/xiaoying-agent/`：`app/`（代码，root 所有、对服务只读）、`app.prev/`（上一版，用于回滚）、`venv/`、`state/`（caddy 可写，只有每日计数 `quota.json`）、`.env`（root 600） |
 | Caddy | 在 `/etc/caddy/Caddyfile` 末尾追加了 `q1-asset-scheduling/deploy/Caddyfile.xiaoying` 的站点块，没有改动已有内容。修改前的备份：`/etc/caddy/Caddyfile.bak-20261110-223022` |
-| 防护 | 访问口令 `DEMO_ACCESS_CODE`；每个 IP 5 次/600 秒；每天 50 次（落盘，跨重启累计）；并发 2。超限时页面自动切到回放 |
+| 防护 | 无需口令，打开即可实时运行；每个 IP 5 次/600 秒；每天 50 次（落盘，跨重启累计）；并发 2。超限时页面自动切到回放 |
 | 版本 | `/api/health` 的 `version` 字段是部署时 main 分支的提交短 SHA |
 
 **已验证**（都在服务器上经公网 DNS 完成）：
 
 - `/api/health` 返回 200，证书校验通过；静态资源与 gzip 正常；路径穿越返回 404。
-- 用访问口令跑通一次实时运行：02 用例，11.7 秒，`needs_confirmation`，与录制一致。错误口令返回 403。
+- 跑通实时运行：02 用例，11.7 秒，`needs_confirmation`，与录制一致（当时启用了口令，错误口令返回 403；之后按需求取消了口令）。
 - `gamesci.gret.me/api/health` 在 Caddy reload 前后、每次部署后都是 200。
 - `scripts/deploy.sh rollback` 能回到上一版，再部署能恢复。
 
-## 2. 访问口令
+## 2. 访问口令（当前未启用）
 
-- 位置：服务器 `/srv/xiaoying-agent/.env` 的 `DEMO_ACCESS_CODE`（本机副本在 `q1-asset-scheduling/.env.server`）。
-- 查看：`ssh aliyun "grep ^DEMO_ACCESS_CODE= /srv/xiaoying-agent/.env"`
-- 更换：改服务器 `.env` 里这一行，再 `ssh aliyun systemctl restart xiaoying-agent`。
-- 评审需要实时运行时，把口令单独发给评审，不要写进仓库或 README。
+- 评审打开页面就能直接用真实模型运行，不需要口令。费用由按 IP 限流、每日上限（`DEMO_DAILY_LIMIT`，默认 50）和并发上限兜住。
+- 如需临时限制访问：在服务器 `/srv/xiaoying-agent/.env` 里填写 `DEMO_ACCESS_CODE=…`，再 `ssh aliyun systemctl restart xiaoying-agent`，页面会自动出现口令输入框；清空这一行并重启即恢复开放。
+- 调整每日上限：改 `.env` 里的 `DEMO_DAILY_LIMIT` 后重启服务。
 
 ## 3. 日常操作（本机执行，在 `q1-asset-scheduling/` 目录下）
 

@@ -1,8 +1,8 @@
 # 命令：python -m pytest -v
-# 时间：2026-11-10 23:51:20 CST；Python 3.12.13；不调用真实模型（真实模型的证据是 examples/ 里已录制的 Trace，测试对它们做断言和回放）
+# 时间：2026-11-11 09:35:52 CST；Python 3.12.13；不调用真实模型（真实模型的证据是 examples/ 里已录制的 Trace，测试对它们做断言和回放）
 
 ============================= test session starts ==============================
-platform darwin -- Python 3.12.13, pytest-9.2.0, pluggy-1.7.0 -- .venv/bin/python
+platform darwin -- Python 3.12.13, pytest-9.2.0, pluggy-1.7.0 -- ./.venv/bin/python
 rootdir: .
 configfile: pytest.ini
 testpaths: tests
@@ -70,7 +70,7 @@ tests/test_server.py::test_access_code_and_lockout PASSED                [ 76%]
 tests/test_server.py::test_rate_limit_daily_limit_and_persistence PASSED [ 77%]
 tests/test_server.py::test_busy_when_all_slots_taken PASSED              [ 78%]
 tests/test_server.py::test_live_request_validation PASSED                [ 80%]
-tests/test_server.py::test_live_disabled_without_access_code PASSED      [ 81%]
+tests/test_server.py::test_live_runs_without_code_when_none_configured PASSED [ 81%]
 tests/test_server.py::test_http_routes PASSED                            [ 82%]
 tests/test_tools.py::test_read_asset_reports_missing_fields_and_unknown_id PASSED [ 84%]
 tests/test_tools.py::test_query_slots_single_slot_and_full_day PASSED    [ 85%]
@@ -86,4 +86,4 @@ tests/test_tools.py::test_duplicate_submission_across_processes PASSED   [ 97%]
 tests/test_tools.py::test_storage_faults PASSED                          [ 98%]
 tests/test_tools.py::test_timeout_after_commit_then_retry_returns_same_draft PASSED [100%]
 
-============================== 76 passed in 0.96s ==============================
+============================== 76 passed in 0.95s ==============================

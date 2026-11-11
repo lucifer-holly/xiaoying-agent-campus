@@ -62,9 +62,11 @@ def test_live_request_validation(app):
     assert case["options"]["repeat"] == 2 and case["request"]["request_id"].startswith("LIVE-")
 
 
-def test_live_disabled_without_access_code(app):
+def test_live_runs_without_code_when_none_configured(app):
     app.cfg.access_code = ""
-    assert not app.live_enabled
+    assert app.live_enabled and not app.access_code_required
+    assert app.run("1.1.1.1", {"case_id": "01-normal-free-slot"})["output"]["status"] == "completed"
+    app.llm = None  # 没有模型密钥时才关闭实时运行
     assert error_code(app.run, "1.1.1.1", {"case_id": "01-normal-free-slot"}) == ("LIVE_DISABLED", True)
 
 

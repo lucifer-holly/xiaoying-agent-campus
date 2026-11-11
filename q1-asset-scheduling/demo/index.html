@@ -5,25 +5,33 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>素材排期 Agent · 运行回放</title>
   <meta name="description" content="素材审核与发布排期 Agent：真实模型运行回放与实时演示">
+  <meta name="theme-color" content="#ff8a6a">
   <link rel="icon" href="data:,">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header class="topbar">
-    <div class="brand">
+  <header class="hero">
+    <div class="hero-ribbons" aria-hidden="true"><span></span><span></span><span></span></div>
+    <div class="hero-inner">
+      <nav class="topnav" aria-label="站点">
+        <span class="brand-mark" id="brand-mark" aria-hidden="true"></span>
+        <span class="brand-text">Q1 · 素材审核与发布排期</span>
+        <span class="topnav-spacer"></span>
+        <a class="topnav-link" href="https://github.com/lucifer-holly/xiaoying-agent-campus/tree/submission" target="_blank" rel="noopener">GitHub 源码</a>
+      </nav>
+      <p class="eyebrow">小影校招 · AI Agent 开发岗考核作品</p>
       <h1>素材审核与发布排期 Agent</h1>
-      <p class="sub" id="meta">真实模型运行回放</p>
+      <p class="lede">读素材、做规则检查、查发布时段、保存排期草稿。每一步做什么由模型根据工具结果决定，越权发布、虚报保存、重复草稿由代码拦住。</p>
+      <ul class="stats" id="stats" aria-label="关键指标"></ul>
+      <div class="tabs" role="tablist" aria-label="视图">
+        <button type="button" role="tab" data-view="replay" aria-selected="true">运行回放</button>
+        <button type="button" role="tab" data-view="compare" aria-selected="false">路径对比</button>
+        <button type="button" role="tab" data-view="live" aria-selected="false" id="tab-live" hidden>实时运行</button>
+      </div>
     </div>
-    <nav class="tabs" role="tablist" aria-label="视图">
-      <button type="button" role="tab" data-view="replay" aria-selected="true">运行回放</button>
-      <button type="button" role="tab" data-view="compare" aria-selected="false">路径对比</button>
-      <button type="button" role="tab" data-view="live" aria-selected="false" id="tab-live" hidden>实时运行</button>
-    </nav>
   </header>
 
-  <p class="notice" role="note">
-    只保存排期草稿，<strong>不会真实发布</strong>：系统里没有发布工具。回放内容是真实模型的原始运行记录（<code>examples/*.trace.json</code>），未经修改。
-  </p>
+  <section class="pipeline" id="pipeline" aria-label="工作方式"></section>
 
   <main>
     <section id="view-replay" class="view view-replay">
@@ -35,11 +43,20 @@
   </main>
 
   <footer class="footer">
-    <span>小影校招 AI Agent 考核 · Q1</span>
-    <span id="generated"></span>
+    <div class="footer-inner">
+      <div>
+        <p class="footer-title">素材审核与发布排期 Agent</p>
+        <p>小影校招 AI Agent 开发岗考核 · Q1 作品演示（非小影官方产品）</p>
+      </div>
+      <div class="footer-meta">
+        <p>只保存排期草稿，<strong>不会真实发布</strong>：系统里没有发布工具。</p>
+        <p>回放内容是真实模型的原始运行记录（examples/*.trace.json），未经修改。</p>
+        <p id="generated"></p>
+      </div>
+    </div>
   </footer>
 
-  <noscript><p class="notice">回放页需要启用 JavaScript；也可以直接查看仓库里的 examples/*.trace.json。</p></noscript>
+  <noscript><p class="noscript">回放页需要启用 JavaScript；也可以直接查看仓库里的 examples/*.trace.json。</p></noscript>
   <script src="data/replay.js"></script>
   <script src="app.js"></script>
 </body>

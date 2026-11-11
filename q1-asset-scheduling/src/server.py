@@ -6,8 +6,8 @@ GET  /             回放页；服务端配置了模型和访问口令时，页�
 GET  /api/health   健康检查（不包含密钥、端点等任何私有信息）
 POST /api/run      用真实模型跑一次排期申请
 
-防护：访问口令（DEMO_ACCESS_CODE）、按 IP 限流（DEMO_RATE_LIMIT，默认 5 次/600 秒）、
-每日调用上限（DEMO_DAILY_LIMIT，默认 50，跨重启累计）、并发上限（DEMO_MAX_CONCURRENCY，默认 2）。
+防护：按 IP 限流（DEMO_RATE_LIMIT，默认 5 次/600 秒）、每日调用上限（DEMO_DAILY_LIMIT，默认 50，跨重启累计）、
+并发上限（DEMO_MAX_CONCURRENCY，默认 2）。访问口令（DEMO_ACCESS_CODE）可选：留空时任何人都能直接运行。
 超限或未配置模型时返回 fallback=replay，页面自动切到回放。
 每次运行都用独立的内存草稿库，只读合成数据；系统没有发布能力。
 """
@@ -253,7 +253,11 @@ class App:
 
     @property
     def live_enabled(self) -> bool:
-        return self.llm is not None and bool(self.cfg.access_code)
+        return self.llm is not None
+
+    @property
+    def access_code_required(self) -> bool:
+        return bool(self.cfg.access_code)
 
     def health(self) -> dict:
         return {
@@ -262,6 +266,7 @@ class App:
             "version": self.version,
             "started_at": self.started_at,
             "live_enabled": self.live_enabled,
+            "access_code_required": self.access_code_required,
             "model": self.llm.model if self.llm else None,
             "quota": self.guard.quota(),
             "notice": "只保存排期草稿，不会真实发布；每次运行使用独立的内存草稿库",
@@ -270,9 +275,8 @@ class App:
     def run(self, ip: str, body: dict) -> dict:
         if self.llm is None:
             raise ApiError(503, "LIVE_DISABLED", "服务端没有配置模型密钥，实时运行不可用，已切换到回放", fallback=True)
-        if not self.cfg.access_code:
-            raise ApiError(503, "LIVE_DISABLED", "服务端没有设置访问口令，实时运行不可用，已切换到回放", fallback=True)
-        self.guard.check_access(ip, str(body.get("access_code") or ""))
+        if self.access_code_required:  # 只有配置了口令才校验；留空时任何人都能直接运行
+            self.guard.check_access(ip, str(body.get("access_code") or ""))
         case = build_live_case(body, self.presets)
         if not self.guard.try_acquire():
             raise ApiError(503, "BUSY", "同时运行的人太多，请稍后再试，或先看回放", fallback=True, retry_after=15)
@@ -370,7 +374,7 @@ def main(argv: list[str] | None = None) -> int:
     app = App(Path(args.state_dir))
     server = ThreadingHTTPServer((args.host, args.port), make_handler(app))
     server.daemon_threads = True
-    mode = "实时运行已开启" if app.live_enabled else "仅回放（未配置模型密钥或访问口令）"
+    mode = ("实时运行已开启" + ("（需要访问口令）" if app.access_code_required else "（无需口令）")) if app.live_enabled else "仅回放（未配置模型密钥）"
     print(f"xiaoying-agent {app.version} 监听 http://{args.host}:{args.port}/ ，{mode}", file=sys.stderr, flush=True)
     try:
         server.serve_forever()

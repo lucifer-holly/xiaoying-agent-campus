@@ -114,8 +114,8 @@ python -m pytest -v                               # 单元测试 + Mock 流程 +
 演示是补充体验，命令行仍是主入口。截图和录屏不能替代代码，评审请以上面的命令和 `examples/` 为准。
 
 - **回放页**：`demo/index.html` 逐步展示 `examples/` 里真实模型的 Trace，支持“路径对比”（01 与 02 并排，高亮从第 3 步开始的差异）。在线版：<https://lucifer-holly.github.io/xiaoying-agent-campus/demo/>（GitHub Pages）；本地直接双击打开也可以。数据由 `python scripts/build_demo.py` 从 `examples/` 生成，不做任何修改。
-- **在线演示**：<https://xiaoying.gret.me/>。页面与回放页相同，多一个“实时运行”：选一个预设用例（可改素材、时间、故障注入），用真实模型现场跑一次，逐步展示 Trace。实时运行需要访问口令，按 IP 限流并有每日上限，超限时自动切回回放。每次运行使用独立的内存草稿库，**只保存草稿，不会真实发布**。
-- **本地启动演示服务**：`python src/server.py --port 8710`，然后打开 <http://127.0.0.1:8710/>。`.env` 里同时配置了 `LLM_API_KEY` 和 `DEMO_ACCESS_CODE` 才会开启实时运行，否则只有回放。
+- **在线演示**：<https://xiaoying.gret.me/>。页面与回放页相同，多一个“实时运行”：选一个预设用例（可改素材、时间、故障注入），用真实模型现场跑一次，逐步展示 Trace。实时运行无需口令，按 IP 限流、有每日上限和并发上限，超限时自动切回回放。每次运行使用独立的内存草稿库，**只保存草稿，不会真实发布**。
+- **本地启动演示服务**：`python src/server.py --port 8710`，然后打开 <http://127.0.0.1:8710/>。`.env` 里配置了 `LLM_API_KEY` 才会开启实时运行，否则只有回放；如需限制访问，可再设置 `DEMO_ACCESS_CODE`，页面会要求输入口令。
 - **部署**：`deploy/` 里是 Caddy 站点片段、systemd unit 和服务器 `.env` 模板，`scripts/deploy.sh` 在本机执行，负责同步、装依赖、重启和健康检查，支持 `status` 与 `rollback`。
 
 ## 目录结构

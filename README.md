@@ -16,7 +16,7 @@
 
 - **提交分支**：`submission`，由 `git subtree split --prefix=q1-asset-scheduling` 导出，分支根目录就是项目本身。最终提交的 commit SHA 以该分支的最新提交为准。
 - **评审入口**：[`q1-asset-scheduling/README.md`](q1-asset-scheduling/README.md)（运行命令）、[`docs/03-evaluation.md`](q1-asset-scheduling/docs/03-evaluation.md)（验收对照）、[`examples/`](q1-asset-scheduling/examples/)（真实模型的输入、输出、Trace）。
-- **在线演示**：回放页 <https://lucifer-holly.github.io/xiaoying-agent-campus/demo/>（GitHub Pages，静态）；实时演示 <https://xiaoying.gret.me/>（回放 + 实时运行，实时运行需要访问口令）。部署记录与运维说明见 [DEPLOY_HANDOFF.md](DEPLOY_HANDOFF.md)。
+- **在线演示**：回放页 <https://lucifer-holly.github.io/xiaoying-agent-campus/demo/>（GitHub Pages，静态）；实时演示 <https://xiaoying.gret.me/>（回放 + 实时运行，打开即可用真实模型现场运行，无需口令）。部署记录与运维说明见 [DEPLOY_HANDOFF.md](DEPLOY_HANDOFF.md)。
 
 详细拆解、设计与交接见 [PLAN.md](PLAN.md)。
 

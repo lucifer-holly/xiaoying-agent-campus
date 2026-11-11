@@ -8,6 +8,7 @@
 from __future__ import annotations
 
 import json
+import re
 import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -15,6 +16,10 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 EXAMPLES = ROOT / "examples"
 OUT = ROOT / "demo" / "data" / "replay.js"
+# 迭代记录在回放页上的说明（这些结论来自 docs/03 第 5 节的分析，不是脚本推断出来的）
+ITERATION_NOTES = {
+    "02-slot-conflict.q1-v1": "迭代前（提示词 q1-v1）：时段冲突时找到 19:00 却没有先保存待确认草稿",
+}
 
 
 def load(path: Path):
@@ -47,7 +52,8 @@ def main() -> int:
         trace = load(trace_path)
         iterations.append({
             "case": trace_path.name.replace(".trace.json", ""),
-            "title": f"{trace['case_id']}（提示词 {trace['prompt_version']}，迭代前的原始记录）",
+            "title": ITERATION_NOTES.get(trace_path.name.replace(".trace.json", ""),
+                                         f"{trace['case_id']}（提示词 {trace['prompt_version']}，迭代前的原始记录）"),
             "request": trace["request"],
             "fault_injection": trace.get("fault_injection") or {},
             "output": load(out_path) if out_path.exists() else trace["final"],
@@ -57,10 +63,20 @@ def main() -> int:
         print("没有可打包的录制结果，先运行 scripts/record_examples.py --llm real", file=sys.stderr)
         return 1
     first = cases[0]["trace"].get("runs", [cases[0]["trace"]])[0]
+    stability = None
+    if (EXAMPLES / "stability-report.json").exists():
+        report = load(EXAMPLES / "stability-report.json")
+        stability = {**report["total"], "runs_per_case": report["runs_per_case"]}
+    tests_passed = None
+    if (EXAMPLES / "test-results.txt").exists():
+        found = re.search(r"(\d+) passed", (EXAMPLES / "test-results.txt").read_text(encoding="utf-8"))
+        tests_passed = int(found.group(1)) if found else None
     payload = {
         "generated_at": datetime.now(timezone(timedelta(hours=8))).isoformat(timespec="seconds"),
         "model": first["model"],
         "prompt_version": first["prompt_version"],
+        "stability": stability,
+        "tests_passed": tests_passed,
         "cases": cases,
         "iterations": iterations,
     }
