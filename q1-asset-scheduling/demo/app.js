@@ -29,6 +29,7 @@
       title: "只差一个日期，模型走了两条路",
       subtitle: "两张申请单只有日期不同。第 3 步查到的 18:00，一边空闲、一边已被占用；从这里开始，每一步都是模型根据工具结果自己决定的。",
       labelA: "11/13 · 18:00 空闲", labelB: "11/12 · 18:00 已被占用",
+      startMeta: "M01 · 抖音 · 18:00 · A 是 11/13，B 是 11/12",
       forkNote: "同样查 18:00，A 查到“空闲”，B 查到“已被占用”，模型从这里开始做不同的决定。",
       takeaway: "代码里没有“被占就改时间”这样的分支。A 看到空闲，就按申请时间直接保存；B 看到被占，先查当天全部时段，再选离 18:00 最近的 19:00 存成待确认草稿，请申请人确认。代码只负责兜底：时间一改，草稿必须是待确认状态；申请单写明日期不能改，就不允许改日期。"
     },
@@ -38,6 +39,7 @@
       title: "同一张申请，两版提示词",
       subtitle: "申请单和工具返回完全相同，唯一的变量是提示词版本。对比能看出这次提示词改动改变了模型的哪一个决定。",
       labelA: "提示词 q1-v1（迭代前）", labelB: "提示词 q1-v2（现在）",
+      startMeta: "同一张申请：M01 · 抖音 · 11/12 18:00",
       change: "q1-v2 在第 3 条里补了一句：时段被占时“直接用 save_draft 保存为待确认草稿……待确认草稿只是先占住这个时段，申请人确认前不会进入排期，所以保存它不需要事先征得同意”。",
       forkNote: "前 4 步完全一样；到第 5 步，A 直接去问申请人，B 先把 19:00 存成待确认草稿。",
       takeaway: "q1-v1 下模型找到 19:00 后没有先占住时段，等待确认期间 19:00 可能被别人排走；q1-v2 讲清楚了“待确认草稿只是先占位”，模型就先保存待确认草稿，再请申请人确认。改完提示词后全部用例重新录制，回放里的 02 就是 q1-v2 的结果。"
@@ -71,6 +73,7 @@
     compare: '<rect x="3" y="4" width="7" height="16" rx="1.5"/><rect x="14" y="4" width="7" height="16" rx="1.5"/>',
     expand: '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>',
     branch: '<circle cx="6" cy="5" r="2"/><circle cx="6" cy="19" r="2"/><circle cx="18" cy="9" r="2"/><path d="M6 7v10"/><path d="M18 11c0 4-6 3.5-11.2 6.4"/>',
+    eye: '<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
     bulb: '<path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.6.4 1 1.1 1 1.8V16h5v-.3c0-.7.4-1.4 1-1.8A6 6 0 0 0 12 3z"/>'
   };
   var timers = [];
@@ -144,6 +147,26 @@
       return el("li", null, el("span", { class: "stat-label", text: it[0] }), el("span", { class: "stat-value", text: it[1] }), el("span", { class: "stat-sub", text: it[2] }));
     }));
     document.getElementById("brand-mark").appendChild(icon("calendarCheck"));
+  }
+  function goTo(view) {
+    if (view === "pipeline") { document.getElementById("pipeline").scrollIntoView({ behavior: "smooth", block: "start" }); return; }
+    var tab = document.querySelector('.tabs [data-view="' + view + '"]');
+    if (tab) tab.click();
+    document.getElementById("view-" + view).scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+  function renderUSP() {
+    var items = [
+      ["eye", "Agent 不是黑盒", "每一步调用了哪个工具、带什么参数、模型给出的理由、工具返回了什么，都写进运行记录，可以逐步回放复查。", "看运行回放", "replay"],
+      ["shield", "过程可控", "关键约束写在代码里，不靠提示词：没有发布工具、先审后排、改时间必须确认、日期不擅自改、按申请内容防重复、步数有上限，最终状态以草稿库为准。", "看代码守住的边界", "pipeline"],
+      ["branch", "运行节点可视化", "每次运行画成节点图：点节点看工具返回，点连线看模型为什么这样做；两次运行在哪一步分叉、为什么分叉，一眼就能看清。", "去看节点图", "compare"]
+    ];
+    document.getElementById("usp").replaceChildren.apply(document.getElementById("usp"), items.map(function (it) {
+      return el("li", null,
+        icon(it[0], "usp-icon"),
+        el("span", { class: "usp-title", text: it[1] }),
+        el("span", { class: "usp-desc", text: it[2] }),
+        el("button", { type: "button", class: "usp-link", onclick: function () { goTo(it[4]); } }, it[3], icon("arrow")));
+    }));
   }
   function renderPipeline() {
     var flow = el("ol", { class: "flow" }, ["read_asset", "check_rules", "query_slots", "save_draft", "finish"].map(function (t) {
@@ -443,7 +466,258 @@
         el("strong", { text: s.label }),
         el("p", { class: "small", text: d ? "草稿 " + d.draft_id + " · " + d.publish_at + " · " + (DRAFT_STATUS[d.status] || d.status) : "没有保存草稿" })));
   }
+  // ---- 节点图：连线 = 模型的决定（调用哪个工具、为什么），节点 = 工具执行后返回的结果 ----------
+  var SVGNS = "http://www.w3.org/2000/svg";
+  var graphs = [];
+  var graphSeq = 0;
+  function layoutGraphs() { graphs.forEach(function (g) { g.layout(); }); }
+  window.addEventListener("resize", function () {
+    clearTimeout(window.__q1GraphTimer);
+    window.__q1GraphTimer = setTimeout(layoutGraphs, 120);
+  });
+  function shortNote(text, n) { if (!text) return ""; return text.length > n ? text.slice(0, n) + "…" : text; }
+  function nodeBadge(step) {
+    if (!step.tool) return { text: "没有调用工具", tone: "muted" };
+    var obs = step.observation || {};
+    if (step.tool === "finish") { var st = statusOf((step.args || {}).status); return { text: "提交：" + st.short, tone: st.tone }; }
+    if (!step.ok) return { text: "失败 " + ((obs.error && obs.error.code) || ""), tone: "bad" };
+    var d = obs.data || {};
+    if (step.tool === "read_asset") return d.complete ? { text: "必填齐全", tone: "ok" } : { text: "缺：" + (d.missing_labels || []).join("、"), tone: "warn" };
+    if (step.tool === "check_rules") {
+      if (d.verdict === "pass") return { text: d.deep_check ? "补查后通过" : "规则通过", tone: "ok" };
+      if (d.verdict === "warn") return { text: "通过（有提示）", tone: "ok" };
+      if (d.verdict === "needs_verification") return { text: "需要补查", tone: "warn" };
+      if (d.verdict === "incomplete") return { text: "必填信息缺失", tone: "warn" };
+      return { text: "阻断：" + (d.findings || []).filter(function (f) { return f.level === "block"; }).map(function (f) { return f.rule_id; }).join("、"), tone: "bad" };
+    }
+    if (step.tool === "query_slots") {
+      if (d.free_slots) return { text: "当天空闲 " + d.free_slots.length + " 个", tone: d.free_slots.length ? "info" : "warn" };
+      var s0 = (d.slots || [])[0] || {};
+      return s0.status === "free" ? { text: s0.time + " 空闲", tone: "ok" } : { text: s0.time + " 已被占用", tone: "warn" };
+    }
+    if (step.tool === "save_draft") {
+      if (!d.created) return { text: "已有草稿，未新建", tone: "info" };
+      return d.draft && d.draft.status === "pending_confirmation" ? { text: "存为待确认草稿", tone: "warn" } : { text: "已存排期草稿", tone: "ok" };
+    }
+    return { text: "成功", tone: "ok" };
+  }
+
+  // ---- 详情面板 ----
+  function panelHead(kicker, title, side) {
+    return el("div", { class: "panel-head" },
+      el("p", { class: "panel-kicker" }, side && side !== "trunk" ? el("span", { class: "side-badge side-" + side, text: side.toUpperCase() }) : null, kicker),
+      el("h4", { text: title }));
+  }
+  function panelKV(rows) {
+    rows = rows.filter(function (r) { return r[1] !== undefined && r[1] !== null && r[1] !== ""; });
+    return rows.length ? el("dl", { class: "kv panel-kv" }, rows.map(function (r) { return [el("dt", { text: r[0] }), el("dd", { text: String(r[1]) })]; })) : null;
+  }
+  function panelJSON(title, obj, open) {
+    return el("details", { class: "panel-json", open: open ? true : null }, el("summary", { text: title }), el("pre", { text: JSON.stringify(obj, null, 2) }));
+  }
+  function panelStep(side, step, shared) {
+    var meta = TOOLS[step.tool] || { label: "没有调用工具" };
+    var badge = nodeBadge(step);
+    return el("div", null,
+      panelHead((shared ? "两边相同 · " : "") + "第 " + step.step + " 步 · 工具返回的结果", meta.label + (step.tool ? "（" + step.tool + "）" : ""), shared ? null : side),
+      el("span", { class: "pill tone-" + badge.tone, text: badge.text }),
+      panelKV([["执行", step.ok ? "成功" : "失败"], ["返回摘要", step.result_summary], ["下一步", step.next_action]]),
+      shared ? el("p", { class: "muted small", text: "两次运行在这一步调用的工具、参数和拿到的返回完全相同。" }) : null,
+      step.observation ? panelJSON("模型看到的完整返回（observation）", step.observation, true) : null);
+  }
+  function panelDecision(side, step, other) {
+    var meta = TOOLS[step.tool] || { label: "没有调用工具" };
+    var llm = step.llm || {};
+    var notes = [el("div", { class: "panel-note" }, icon("spark"), el("div", null, el("strong", { text: other ? "A 的理由" : "模型的理由" }), el("p", { text: step.decision_note || "（这一步没有写决策依据）" })))];
+    if (other && other.decision_note) notes.push(el("div", { class: "panel-note" }, icon("spark"), el("div", null, el("strong", { text: "B 的理由" }), el("p", { text: other.decision_note }))));
+    return el("div", null,
+      panelHead("第 " + step.step + " 步 · 模型的决定", "调用 " + meta.label + (step.tool ? "（" + step.tool + "）" : ""), other ? null : side),
+      notes,
+      el("p", { class: "panel-sub", text: "调用参数" }),
+      panelKV(Object.keys(step.args || {}).map(function (k) { return [k, raw(step.args[k])]; })),
+      el("p", { class: "panel-sub", text: "这次模型调用" }),
+      panelKV([["耗时", llm.latency_ms ? (llm.latency_ms / 1000).toFixed(1) + " 秒" : null], ["tokens（输入 + 输出）", llm.prompt_tokens ? llm.prompt_tokens + " + " + llm.completion_tokens : null]]),
+      el("p", { class: "muted small", text: "“模型的理由”是模型调用工具时在 decision_note 参数里写下的一句话；思考模式已关闭，不记录模型内部的推理过程。" }));
+  }
+  function panelStart(pair, rows) {
+    return el("div", null,
+      panelHead("输入", "两次运行的申请单"),
+      el("table", { class: "panel-table" },
+        el("thead", null, el("tr", null, el("th", { text: "" }), el("th", null, el("span", { class: "side-badge side-a", text: "A" })), el("th", null, el("span", { class: "side-badge side-b", text: "B" })))),
+        el("tbody", null, rows.map(function (r) { return el("tr", { class: r.diff ? "diff" : null }, el("th", { text: r.label }), el("td", { text: r.a }), el("td", { text: r.b })); }))),
+      el("p", { class: "muted small", text: "标色的行是两次运行唯一不同的地方。" }));
+  }
+  function panelFork(pair, ta, tb, fork) {
+    function line(side, s) {
+      if (!s) return null;
+      var b = nodeBadge(s);
+      return el("div", { class: "panel-fork-line" }, el("span", { class: "side-badge side-" + side, text: side.toUpperCase() }),
+        el("span", { text: (TOOLS[s.tool] || { label: "—" }).label + "：" }), el("span", { class: "pill tone-" + b.tone, text: b.text }));
+    }
+    return el("div", null,
+      panelHead("分叉点", "从第 " + (fork + 1) + " 步开始，两次运行不一样了"),
+      el("p", { class: "panel-message", text: pair.forkNote }),
+      line("a", ta.steps[fork]), line("b", tb.steps[fork]),
+      el("p", { class: "muted small", text: "前 " + fork + " 步两边调用的工具、参数和返回完全相同。点图里的节点看工具返回，点连线上的标签看模型为什么这样做。" }));
+  }
+  function panelOutcome(side, out, trace) {
+    var s = statusOf(out.status);
+    var d = out.draft;
+    var corr = (out.validator && out.validator.corrections) || [];
+    var usage = trace.llm_usage || {};
+    return el("div", null,
+      panelHead("最终结果", s.label, side),
+      el("p", { class: "panel-message", text: out.message }),
+      out.facts_summary ? el("div", { class: "facts" }, icon("shield"), el("div", null, el("p", { class: "facts-label", text: "系统核对（代码按草稿库生成）" }), el("p", { text: out.facts_summary }))) : null,
+      panelKV([["status", out.status],
+        ["草稿", d ? d.draft_id + " · " + d.publish_at + " · " + (DRAFT_STATUS[d.status] || d.status) : "没有保存草稿"],
+        ["校验器更正", corr.length ? corr.length + " 处" : "无（模型结论与草稿库一致）"],
+        ["步数", out.run ? out.run.steps_used + " / 上限 " + out.run.max_steps : null],
+        ["模型总耗时", usage.latency_ms ? (usage.latency_ms / 1000).toFixed(1) + " 秒" : null]]),
+      panelJSON("最终输出（output JSON）", out, false));
+  }
+  function panelValidator(side, out) {
+    var corr = (out.validator && out.validator.corrections) || [];
+    return el("div", null,
+      panelHead("finish 之后 · 校验器核对", "以草稿库为准，不采信模型的说法", side),
+      el("p", { class: "panel-message", text: "模型调用 finish 提交结论后，校验器拿它和调用台账、草稿库逐项核对：草稿是否真的存在、状态是否一致、说明里有没有声称已保存或已发布。" }),
+      corr.length ? el("ul", { class: "panel-list" }, corr.map(function (c) { return el("li", { text: fmt(c.from) + " → " + fmt(c.to) + "：" + c.reason }); }))
+        : el("p", { class: "validator-ok" }, icon("check"), "这次没有需要更正的地方"),
+      out.facts_summary ? el("p", { class: "muted small", text: out.facts_summary }) : null);
+  }
+
+  function buildGraph(pair, ta, tb, oa, ob, fork, rows) {
+    var id = "q1g" + (++graphSeq);
+    var canvas = el("div", { class: "graph" });
+    var svg = document.createElementNS(SVGNS, "svg");
+    svg.setAttribute("class", "graph-edges");
+    svg.setAttribute("aria-hidden", "true");
+    canvas.appendChild(svg);
+    var panel = el("aside", { class: "graph-panel", "aria-live": "polite" });
+    var selectables = [];
+    var edges = [];
+    function select(target, render, quiet) {
+      selectables.forEach(function (n) { n.classList.remove("selected"); n.setAttribute("aria-pressed", "false"); });
+      target.classList.add("selected");
+      target.setAttribute("aria-pressed", "true");
+      panel.replaceChildren(render());
+      if (!quiet && window.matchMedia && window.matchMedia("(max-width: 960px)").matches) panel.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+    function clickable(target, render) {
+      target.setAttribute("aria-pressed", "false");
+      target.addEventListener("click", function () { select(target, render); });
+      selectables.push(target);
+      return target;
+    }
+    function node(o, render) {
+      var n = el("button", { type: "button", class: "gnode kind-" + o.kind + " side-" + o.side + (o.tool ? " tool-" + o.tool : "") + (o.tone ? " tone-" + o.tone : "") },
+        icon(o.icon, "gnode-icon"),
+        el("span", { class: "gnode-text" }, el("span", { class: "gnode-title", text: o.title }), o.meta ? el("span", { class: "gnode-meta", text: o.meta }) : null),
+        o.badge ? el("span", { class: "node-badge tone-" + o.badge.tone, text: o.badge.text }) : null);
+      n.style.gridRow = String(o.row);
+      n.style.gridColumn = o.side === "trunk" ? "1 / span 2" : (o.side === "a" ? "1" : "2");
+      canvas.appendChild(n);
+      return clickable(n, render);
+    }
+    function edge(from, to, side, label, render) {
+      var btn = null;
+      if (label) {
+        btn = el("button", { type: "button", class: "gedge-label side-" + side, title: label.full || label.text }, icon(label.icon || "spark"), el("span", { text: label.text }));
+        canvas.appendChild(btn);
+        clickable(btn, render);
+      }
+      edges.push({ from: from, to: to, side: side, label: btn });
+    }
+    function decisionLabel(s) { return s.tool ? { text: shortNote(s.decision_note, 12) || TOOLS[s.tool].label, full: s.decision_note } : null; }
+    function stepNode(s, side, row, render) {
+      var meta = TOOLS[s.tool] || { label: "没有调用工具", icon: "pause" };
+      return node({ kind: "step", side: side, tool: s.tool || "none", icon: meta.icon, title: meta.label, meta: "第 " + s.step + " 步 · " + (s.tool || "—"), badge: nodeBadge(s), row: row }, render);
+    }
+
+    var row = 1;
+    var start = node({ kind: "start", side: "trunk", icon: "file", title: "输入：申请单", meta: pair.startMeta, row: row++ }, function () { return panelStart(pair, rows); });
+    var last = start;
+    ta.steps.slice(0, fork).forEach(function (s, i) {
+      var sb = tb.steps[i];
+      var n = stepNode(s, "trunk", row++, function () { return panelStep("trunk", s, true); });
+      edge(last, n, "trunk", decisionLabel(s), function () { return panelDecision("trunk", s, sb); });
+      last = n;
+    });
+    var forkRender = function () { return panelFork(pair, ta, tb, fork); };
+    var forkNode = node({ kind: "fork", side: "trunk", icon: "branch", title: "分叉点", meta: "第 " + (fork + 1) + " 步起不同", row: row++ }, forkRender);
+    edge(last, forkNode, "trunk", null);
+    var firstRow = row;
+    [["a", ta, oa], ["b", tb, ob]].forEach(function (x) {
+      var side = x[0], t = x[1], out = x[2], r = firstRow, prev = forkNode;
+      t.steps.slice(fork).forEach(function (s) {
+        var n = stepNode(s, side, r++, function () { return panelStep(side, s, false); });
+        edge(prev, n, side, decisionLabel(s), function () { return panelDecision(side, s, null); });
+        prev = n;
+      });
+      var st = statusOf(out.status);
+      var o = node({ kind: "outcome", side: side, icon: st.icon, tone: st.tone, title: st.label, row: r,
+        meta: out.draft ? out.draft.publish_at + " · " + (DRAFT_STATUS[out.draft.status] || out.draft.status) : "没有保存草稿" }, function () { return panelOutcome(side, out, t); });
+      edge(prev, o, side, { text: "校验器核对", icon: "shield" }, function () { return panelValidator(side, out); });
+    });
+
+    function layout() {
+      if (!canvas.isConnected || canvas.offsetParent === null) return;
+      var c = canvas.getBoundingClientRect();
+      var w = Math.round(c.width), h = Math.round(c.height);
+      svg.setAttribute("width", w);
+      svg.setAttribute("height", h);
+      svg.setAttribute("viewBox", "0 0 " + w + " " + h);
+      while (svg.firstChild) svg.removeChild(svg.firstChild);
+      var defs = document.createElementNS(SVGNS, "defs");
+      ["trunk", "a", "b"].forEach(function (side) {
+        var m = document.createElementNS(SVGNS, "marker");
+        m.setAttribute("id", id + "-" + side);
+        m.setAttribute("viewBox", "0 0 10 10");
+        m.setAttribute("refX", "9");
+        m.setAttribute("refY", "5");
+        m.setAttribute("markerWidth", "7");
+        m.setAttribute("markerHeight", "7");
+        m.setAttribute("orient", "auto");
+        var tip = document.createElementNS(SVGNS, "path");
+        tip.setAttribute("d", "M0,0 L10,5 L0,10 z");
+        tip.setAttribute("class", "gmarker-" + side);
+        m.appendChild(tip);
+        defs.appendChild(m);
+      });
+      svg.appendChild(defs);
+      edges.forEach(function (e) {
+        var a = e.from.getBoundingClientRect(), b = e.to.getBoundingClientRect();
+        var x1 = a.left - c.left + a.width / 2, y1 = a.bottom - c.top;
+        var x2 = b.left - c.left + b.width / 2, y2 = b.top - c.top;
+        var bend = Math.max(18, (y2 - y1) / 2);
+        var p = document.createElementNS(SVGNS, "path");
+        p.setAttribute("d", "M" + x1 + "," + y1 + " C" + x1 + "," + (y1 + bend) + " " + x2 + "," + (y2 - bend) + " " + x2 + "," + (y2 - 1));
+        p.setAttribute("class", "gedge gedge-" + e.side);
+        p.setAttribute("marker-end", "url(#" + id + "-" + e.side + ")");
+        svg.appendChild(p);
+        if (e.label) { e.label.style.left = (x1 + x2) / 2 + "px"; e.label.style.top = (y1 + y2) / 2 + "px"; }
+      });
+    }
+    select(forkNode, forkRender, true);
+    var legend = el("div", { class: "graph-legend" },
+      el("span", { class: "legend-item" }, el("span", { class: "legend-node" }), "节点 = 工具返回的结果"),
+      el("span", { class: "legend-item" }, el("span", { class: "legend-edge" }, icon("spark")), "连线上的标签 = 模型的决定和理由"),
+      el("span", { class: "legend-item" }, el("span", { class: "side-badge side-a", text: "A" }), pair.labelA),
+      el("span", { class: "legend-item" }, el("span", { class: "side-badge side-b", text: "B" }), pair.labelB));
+    var g = { layout: layout };
+    graphs.push(g);
+    return {
+      el: el("div", { class: "graph-layout" },
+        el("div", { class: "graph-main" }, legend, el("p", { class: "graph-hint" }, icon("arrow"), "点任意节点或连线上的标签，右侧显示这一步的完整信息"), canvas),
+        panel),
+      layout: layout
+    };
+  }
+
+  var compareRendered = false;
   function renderCompare() {
+    if (compareRendered) return;
+    compareRendered = true;
     var view = document.getElementById("view-compare");
     view.replaceChildren(el("header", { class: "cmp-intro" },
       el("h2", { text: "模型如何应变" }),
@@ -464,6 +738,25 @@
           el("ol", { class: "branch-steps" }, trace.steps.slice(fork).map(function (s, i) { return branchStep(s, i === 0); })),
           branchOutcome(out));
       };
+      var graph = buildGraph(pair, ta, tb, oa, ob, fork, rows);
+      var listView = el("div", { class: "cmp-list" },
+        trunk.length ? el("ol", { class: "trunk" }, trunk.map(trunkStep)) : null,
+        el("div", { class: "fork-banner" }, icon("branch"), el("span", null, el("strong", { text: "分叉点 · 第 " + forkStepNo + " 步  " }), pair.forkNote)),
+        el("div", { class: "fork-lines", "aria-hidden": "true" }),
+        el("div", { class: "branches" }, branch("a", pair.labelA, ta, oa), branch("b", pair.labelB, tb, ob)));
+      var processBox = el("div", null, graph.el);
+      var btnGraph = el("button", { type: "button", class: "seg", "aria-pressed": "true" }, icon("branch"), "节点图");
+      var btnList = el("button", { type: "button", class: "seg", "aria-pressed": "false" }, icon("list"), "步骤列表");
+      btnGraph.addEventListener("click", function () {
+        btnGraph.setAttribute("aria-pressed", "true"); btnList.setAttribute("aria-pressed", "false");
+        processBox.replaceChildren(graph.el);
+        requestAnimationFrame(graph.layout);
+      });
+      btnList.addEventListener("click", function () {
+        btnList.setAttribute("aria-pressed", "true"); btnGraph.setAttribute("aria-pressed", "false");
+        processBox.replaceChildren(listView);
+      });
+      var viewSwitch = el("div", { class: "seg-group", role: "group", "aria-label": "过程的显示方式" }, btnGraph, btnList);
       view.appendChild(el("section", { class: "cmp card" },
         el("header", { class: "cmp-head" },
           el("span", { class: "tag tag-brand" }, icon("flag"), pair.checkpoint),
@@ -475,13 +768,10 @@
           el("div", { class: "cmp-vs", text: "VS" }),
           sideTicket("b", pair.labelB, rows, "b", B)),
         pair.change ? el("p", { class: "cmp-change" }, icon("edit"), el("span", { text: pair.change })) : null,
-        el("div", { class: "cmp-section-title", text: "② 过程：前 " + fork + " 步相同，第 " + forkStepNo + " 步开始分叉" }),
-        trunk.length ? el("ol", { class: "trunk" }, trunk.map(trunkStep)) : null,
-        el("div", { class: "fork-banner" }, icon("branch"), el("span", null, el("strong", { text: "分叉点 · 第 " + forkStepNo + " 步  " }), pair.forkNote)),
-        el("div", { class: "fork-lines", "aria-hidden": "true" }),
-        el("div", { class: "branches" },
-          branch("a", pair.labelA, ta, oa),
-          branch("b", pair.labelB, tb, ob)),
+        el("div", { class: "cmp-section-head" },
+          el("div", { class: "cmp-section-title", text: "② 过程：前 " + fork + " 步相同，第 " + forkStepNo + " 步开始分叉" }),
+          viewSwitch),
+        processBox,
         el("div", { class: "cmp-section-title", text: "③ 结论" }),
         el("div", { class: "cmp-takeaway" }, icon("bulb"), el("p", { text: pair.takeaway }))
       ));
@@ -645,6 +935,7 @@
   function setHash(h) { if (history.replaceState) history.replaceState(null, "", "#" + h); }
 
   function boot() {
+    renderUSP();
     renderStats();
     renderPipeline();
     document.getElementById("generated").textContent = DATA.generated_at ? "回放数据生成于 " + DATA.generated_at + " · 提示词 " + (DATA.prompt_version || "—") : "";
@@ -654,6 +945,7 @@
         if (v === "compare") renderCompare();
         showView(v);
         setHash("view=" + v);
+        if (v === "compare") requestAnimationFrame(layoutGraphs);
       });
     });
     var hash = location.hash.slice(1);
@@ -663,7 +955,7 @@
     });
     if (hash.indexOf("view=") === 0) {
       selectCase(null, true);
-      if (hash === "view=compare") { renderCompare(); showView("compare"); }
+      if (hash === "view=compare") { renderCompare(); showView("compare"); requestAnimationFrame(layoutGraphs); }
     } else {
       selectCase(hash.indexOf("case=") === 0 ? decodeURIComponent(hash.slice(5)) : null);
     }
