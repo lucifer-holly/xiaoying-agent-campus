@@ -96,3 +96,81 @@ def test_live_request_accepts_short_instructions_only(app):
     assert case["request"]["instructions"] == "优先排到 20:00 以后"
     too_long = {"case_id": "01-normal-free-slot", "request": {"instructions": "长" * 301}}
     assert error_code(server.build_live_case, too_long, app.presets)[0] == "BAD_REQUEST"
+
+
+def test_live_request_rejects_impossible_dates(app):
+    """格式对但日期不存在（13 月、2 月 30 日、25 点）要在调用模型之前拒绝。"""
+    for bad in ("2026-13-45 99:99", "2026-02-30 18:00", "2026-11-13 25:00"):
+        with pytest.raises(server.ApiError) as info:
+            server.build_live_case({"case_id": "01-normal-free-slot", "request": {"publish_at": bad}}, app.presets)
+        assert info.value.code == "BAD_REQUEST" and "publish_at" in info.value.message
+    ok = server.build_live_case({"case_id": "01-normal-free-slot", "request": {"publish_at": "2026-11-14 09:00"}}, app.presets)
+    assert ok["request"]["publish_at"] == "2026-11-14 09:00"
+
+
+def _raw_exchange(port: int, payload: bytes, timeout: float = 3.0) -> bytes:
+    """发原始字节，读到连接关闭或超时为止，返回收到的全部响应。"""
+    import socket
+    with socket.create_connection(("127.0.0.1", port), timeout=timeout) as sock:
+        sock.sendall(payload)
+        chunks = []
+        try:
+            while True:
+                data = sock.recv(65536)
+                if not data:
+                    break
+                chunks.append(data)
+        except socket.timeout:
+            chunks.append(b"<TIMEOUT>")
+    return b"".join(chunks)
+
+
+def test_malformed_or_oversized_posts_get_one_clean_answer(app, capsys):
+    """Content-Length 非法、为负或超限时：只回一个错误响应并关闭连接，不挂起、不把剩下的请求体当成下一个请求写进日志。"""
+    httpd = ThreadingHTTPServer(("127.0.0.1", 0), server.make_handler(app))
+    threading.Thread(target=httpd.serve_forever, daemon=True).start()
+    port = httpd.server_address[1]
+    head = "POST /api/run HTTP/1.1\r\nHost: x\r\nContent-Type: application/json\r\nContent-Length: {}\r\n\r\n"
+    try:
+        for length, status in (("abc", b" 400 "), ("-1", b" 400 ")):
+            reply = _raw_exchange(port, head.format(length).encode() + b"{}")
+            assert reply.count(b"HTTP/1.1 ") == 1 and status in reply.split(b"\r\n", 1)[0], reply[:120]
+            assert b"<TIMEOUT>" not in reply
+        big = b'{"note": "' + b"x" * (server.MAX_BODY + 10) + b'"}'
+        reply = _raw_exchange(port, head.format(len(big)).encode() + big)
+        assert reply.count(b"HTTP/1.1 ") == 1 and b" 413 " in reply.split(b"\r\n", 1)[0]
+        assert b"<TIMEOUT>" not in reply
+        assert "x" * 400 not in capsys.readouterr().err  # 请求体内容没有进日志
+    finally:
+        httpd.shutdown()
+        httpd.server_close()
+
+
+def test_client_leaving_mid_run_is_one_log_line_not_a_traceback(app, capsys, monkeypatch):
+    """访客在运行途中关掉页面：结果写不回去时只记一行，不再回 500，也不把堆栈打进日志。"""
+    import socket
+    import struct
+    import time
+    real_run = app.run
+
+    def slow_run(ip, body):
+        time.sleep(0.3)
+        return real_run(ip, body)
+
+    monkeypatch.setattr(app, "run", slow_run)
+    httpd = ThreadingHTTPServer(("127.0.0.1", 0), server.make_handler(app))
+    threading.Thread(target=httpd.serve_forever, daemon=True).start()
+    body = json.dumps({"case_id": "01-normal-free-slot", "access_code": "test-code"}).encode()
+    head = f"POST /api/run HTTP/1.1\r\nHost: x\r\nContent-Type: application/json\r\nContent-Length: {len(body)}\r\n\r\n"
+    try:
+        sock = socket.create_connection(("127.0.0.1", httpd.server_address[1]))
+        sock.sendall(head.encode() + body)
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_LINGER, struct.pack("ii", 1, 0))
+        sock.close()  # 立即断开（RST），模拟关掉页面
+        time.sleep(1.0)
+        err = capsys.readouterr().err
+        assert "Traceback" not in err and "INTERNAL_ERROR" not in err and " 500 " not in err, err[-600:]
+        assert "断开" in err
+    finally:
+        httpd.shutdown()
+        httpd.server_close()

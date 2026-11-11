@@ -95,7 +95,7 @@ flowchart LR
 | `src/domain/validator.py` | 输出校验器 |
 | `src/domain/rules.py` / `store.py` / `faults.py` | 规则引擎 / 数据与草稿库 / 故障注入 |
 | `src/expectations.py` | 用例 `expected` 的统一检查（录制脚本与测试共用） |
-| `scripts/record_examples.py` / `eval_stability.py` | 批量录制 / 稳定性评估 |
+| `scripts/record_examples.py` / `eval_stability.py` / `eval_instructions.py` | 批量录制 / 稳定性评估 / 补充说明评测 |
 | `src/server.py`、`demo/` | 演示：HTTP 服务（按 IP 限流、每日上限、并发上限，可选访问口令）与回放页 |
 | `deploy/`、`scripts/deploy.sh` | 演示部署：Caddy 站点片段、systemd unit、服务器 `.env` 模板、部署 / 回滚脚本 |
 

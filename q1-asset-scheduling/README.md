@@ -14,6 +14,7 @@
 | ReAct 循环 | [`src/agent/loop.py`](src/agent/loop.py) |
 | 代码边界与校验器 | [`src/domain/scheduling.py`](src/domain/scheduling.py)、[`src/domain/validator.py`](src/domain/validator.py) |
 | 测试结果 | [`examples/test-results.txt`](examples/test-results.txt) |
+| 补充说明：偏好能改变选择、越权要求不会被执行 | [`examples/instructions-report.json`](examples/instructions-report.json)，说明见 [`docs/03-evaluation.md`](docs/03-evaluation.md) 第 9 节 |
 | 演示（补充体验，不替代命令行） | 回放页：<https://lucifer-holly.github.io/xiaoying-agent-campus/demo/>（静态，也可本地双击 [`demo/index.html`](demo/index.html)）；实时演示：<https://xiaoying.gret.me/>，说明见下方“演示” |
 | 需求 / 方案 / 评估 / AI 使用 / 复盘 | [`docs/`](docs/) |
 
@@ -78,6 +79,7 @@ python src/main.py --input examples/06-duplicate-submission.input.json --llm rea
 ```bash
 python scripts/record_examples.py --llm real      # 重录 examples/ 下全部用例
 python scripts/eval_stability.py --runs 3         # 每个用例重复实跑 3 次，写 examples/stability-report.json
+python scripts/eval_instructions.py --runs 3      # 补充说明：9 个场景各实跑 3 次，写 examples/instructions-report.json
 python -m pytest -v                               # 单元测试 + Mock 流程 + 对已录制真实 Trace 的断言
 ```
 
@@ -114,7 +116,7 @@ python -m pytest -v                               # 单元测试 + Mock 流程 +
 演示是补充体验，命令行仍是主入口。截图和录屏不能替代代码，评审请以上面的命令和 `examples/` 为准。
 
 - **回放页**：`demo/index.html` 把 `examples/` 里真实模型的每次运行画成可点击的节点图（默认），也可以切换成步骤列表。节点是工具返回的结果，节点之间的说明是模型写下的决策依据（`decision_note`，整段显示）；点节点或说明，旁边显示完整的参数、返回和耗时，“逐步播放”按顺序走一遍。用例列表最后是“两次运行对比”：01 与 02 只差一个日期，图里标出前两步相同、第 3 步工具结果不同、之后两条分支各自的决定；另一组对比提示词 q1-v1 与 q1-v2。在线版：<https://lucifer-holly.github.io/xiaoying-agent-campus/demo/>（GitHub Pages）；本地直接双击打开也可以。数据由 `python scripts/build_demo.py` 从 `examples/` 生成，不做任何修改。
-- **在线演示**：<https://xiaoying.gret.me/>。页面与回放页相同，多一个“新建任务”：选一个场景或自己填申请单，还可以在文字框里补充要求（例如“如果 18:00 被占，优先排到 20:00 以后”，最多 300 字），用真实模型现场跑一次，结果同样画成节点图。补充说明作为申请人的偏好交给模型，改变不了代码守住的边界（见 [docs/02 第 8 节](docs/02-solution.md)）。无需口令，按 IP 限流、有每日上限和并发上限，超限时自动切回回放。每次运行使用独立的内存草稿库，**只保存草稿，不会真实发布**。
+- **在线演示**：<https://xiaoying.gret.me/>。页面与回放页相同，多一个“新建任务”：选一个场景或自己填申请单，还可以在文字框里补充要求（例如“如果 18:00 被占，优先排到 20:00 以后”，最多 300 字），用真实模型现场跑一次，结果同样画成节点图。补充说明作为申请人的偏好交给模型，改变不了代码守住的边界（见 [docs/02 第 8 节](docs/02-solution.md)）。无需口令，按 IP 限流、有每日上限和并发上限，超限时页面给出提示和对应场景的回放入口。每次运行使用独立的内存草稿库，**只保存草稿，不会真实发布**。
 - **数据接入**：页面上的“数据接入”列出素材库、发布日历、内容规则、版权库，以及渠道账号、消息通知、发布系统的接入入口。这些入口目前只有说明，没有实现，规划见 [`docs/02-solution.md`](docs/02-solution.md) 第 7 节。
 - **本地启动演示服务**：`python src/server.py --port 8710`，然后打开 <http://127.0.0.1:8710/>。`.env` 里配置了 `LLM_API_KEY` 才会开启新建任务，否则只有回放；如需限制访问，可再设置 `DEMO_ACCESS_CODE`，页面会要求输入口令。
 - **部署**：`deploy/` 里是 Caddy 站点片段、systemd unit 和服务器 `.env` 模板，`scripts/deploy.sh` 在本机执行，负责同步、装依赖、重启和健康检查，支持 `status` 与 `rollback`。
@@ -128,7 +130,7 @@ q1-asset-scheduling/
 ├── .env.example
 ├── src/            # main.py（命令行）、server.py（演示服务）、agent/（循环、模型、工具注册、Trace）、domain/（业务工具、规则、校验器）
 ├── tests/          # 工具边界、循环与校验器、用例级验收
-├── examples/       # 每个用例的 input / output / trace，test-results.txt，stability-report.json，prompt-iterations/
+├── examples/       # 每个用例的 input / output / trace，test-results.txt，stability-report.json，instructions-report.json，prompt-iterations/
 ├── data/           # 合成素材、规则、发布日历、版权库
 ├── scripts/        # 批量录制、稳定性评估、生成回放数据、部署
 ├── demo/           # 回放页（静态）

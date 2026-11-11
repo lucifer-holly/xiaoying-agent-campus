@@ -8,7 +8,7 @@ POST /api/run      用真实模型跑一次排期申请
 
 防护：按 IP 限流（DEMO_RATE_LIMIT，默认 5 次/600 秒）、每日调用上限（DEMO_DAILY_LIMIT，默认 50，跨重启累计）、
 并发上限（DEMO_MAX_CONCURRENCY，默认 2）。访问口令（DEMO_ACCESS_CODE）可选：留空时任何人都能直接运行。
-超限或未配置模型时返回 fallback=replay，页面自动切到回放。
+超限或未配置模型时返回 fallback=replay，页面提示并给出这个场景的回放入口。
 每次运行都用独立的内存草稿库，只读合成数据；系统没有发布能力。
 """
 from __future__ import annotations
@@ -21,6 +21,7 @@ import json
 import os
 import re
 import secrets
+import socket
 import sys
 import tempfile
 import threading
@@ -47,6 +48,8 @@ CST = timezone(timedelta(hours=8))
 DEMO_DIR = PROJECT_ROOT / "demo"
 EXAMPLES = PROJECT_ROOT / "examples"
 MAX_BODY = 16 * 1024
+DRAIN_LIMIT = 1024 * 1024  # 超限的请求体在这个大小以内就先读掉丢弃，客户端能完整收到 413
+CLIENT_GONE = (BrokenPipeError, ConnectionResetError, ConnectionAbortedError)  # 访客中途关掉页面时写响应会遇到
 CONTENT_TYPES = {
     ".html": "text/html; charset=utf-8", ".js": "application/javascript; charset=utf-8",
     ".css": "text/css; charset=utf-8", ".json": "application/json; charset=utf-8",
@@ -158,11 +161,11 @@ class Guard:
             if self._quota["date"] != self._today():
                 self._quota = {"date": self._today(), "used": 0}
             if self._quota["used"] >= self.cfg.daily_limit:
-                raise ApiError(429, "DAILY_LIMIT", f"今天的实时调用次数已用完（{self.cfg.daily_limit} 次），已切换到回放", fallback=True)
+                raise ApiError(429, "DAILY_LIMIT", f"今天的实时调用次数已用完（{self.cfg.daily_limit} 次），可以先看这个场景的回放", fallback=True)
             hits = self._window(self._hits, ip, self.cfg.rate_window_s, now)
             if len(hits) >= self.cfg.rate_count:
                 wait = int(self.cfg.rate_window_s - (now - hits[0])) + 1
-                raise ApiError(429, "RATE_LIMITED", f"请求太频繁（每 {self.cfg.rate_window_s} 秒最多 {self.cfg.rate_count} 次），已切换到回放", fallback=True, retry_after=wait)
+                raise ApiError(429, "RATE_LIMITED", f"请求太频繁（每 {self.cfg.rate_window_s} 秒最多 {self.cfg.rate_count} 次），可以先看这个场景的回放", fallback=True, retry_after=wait)
             hits.append(now)
             self._quota["used"] += 1
             self._save_quota()
@@ -210,6 +213,11 @@ def build_live_case(body: dict, presets: dict[str, dict]) -> dict:
         problems.append(f"channel 只能是 {', '.join(CHANNELS)}")
     if not isinstance(req.get("publish_at"), str) or not _PUBLISH_AT.match(req["publish_at"]):
         problems.append("publish_at 格式应为 YYYY-MM-DD HH:MM")
+    else:
+        try:  # 格式对但日期不存在（13 月、2 月 30 日、25 点）也在调用模型之前拒绝
+            datetime.strptime(req["publish_at"].replace("T", " "), "%Y-%m-%d %H:%M")
+        except ValueError:
+            problems.append("publish_at 不是有效的日期时间")
     for key, limit in (("note", 200), ("requester", 40), ("instructions", 300)):
         if key in req and (not isinstance(req[key], str) or len(req[key]) > limit):
             problems.append(f"{key} 必须是不超过 {limit} 字的字符串")
@@ -274,7 +282,7 @@ class App:
 
     def run(self, ip: str, body: dict) -> dict:
         if self.llm is None:
-            raise ApiError(503, "LIVE_DISABLED", "服务端没有配置模型密钥，实时运行不可用，已切换到回放", fallback=True)
+            raise ApiError(503, "LIVE_DISABLED", "服务端没有配置模型密钥，实时运行不可用，可以先看回放", fallback=True)
         if self.access_code_required:  # 只有配置了口令才校验；留空时任何人都能直接运行
             self.guard.check_access(ip, str(body.get("access_code") or ""))
         case = build_live_case(body, self.presets)
@@ -298,7 +306,8 @@ def make_handler(app: App):
 
         def _client_ip(self) -> str:
             peer = self.client_address[0]
-            forwarded = self.headers.get("X-Forwarded-For")
+            headers = getattr(self, "headers", None)  # 请求行还没读完就断开时还没有 headers
+            forwarded = headers.get("X-Forwarded-For") if headers else None
             # 只信任本机反向代理（Caddy）带来的 X-Forwarded-For，取最右侧（代理看到的客户端地址）
             if forwarded and peer in ("127.0.0.1", "::1"):
                 return forwarded.split(",")[-1].strip()
@@ -338,29 +347,85 @@ def make_handler(app: App):
 
         do_HEAD = do_GET
 
-        def do_POST(self) -> None:  # noqa: N802
-            if urlsplit(self.path).path != "/api/run":
-                return self._json(404, {"ok": False, "error": {"code": "NOT_FOUND", "message": "没有这个接口"}})
+        def handle_one_request(self) -> None:
             try:
-                length = int(self.headers.get("Content-Length") or 0)
-                if length > MAX_BODY:
-                    raise ApiError(413, "TOO_LARGE", "请求体过大")
+                super().handle_one_request()
+            except CLIENT_GONE:  # 结果已经算完但写不回去：记一行就好，不回 500，也不打印堆栈
+                self.close_connection = True
+                self.log_message("客户端在响应写完之前断开（例如运行途中关掉了页面）")
+
+        def do_POST(self) -> None:  # noqa: N802
+            # 请求体没读完就回错误时关闭连接，免得剩下的字节被当成下一个请求解析
+            close = {"Connection": "close"}
+            if urlsplit(self.path).path != "/api/run":
+                self._json(404, {"ok": False, "error": {"code": "NOT_FOUND", "message": "没有这个接口"}}, close)
+                return self._linger()
+            body_read = False
+            try:
+                if "chunked" in (self.headers.get("Transfer-Encoding") or "").lower():
+                    raise ApiError(411, "LENGTH_REQUIRED", "请求需要带 Content-Length")
                 try:
-                    body = json.loads(self.rfile.read(length) or b"{}")
+                    length = int(self.headers.get("Content-Length") or 0)
+                except ValueError:
+                    raise ApiError(400, "BAD_REQUEST", "Content-Length 不合法") from None
+                if length < 0:
+                    raise ApiError(400, "BAD_REQUEST", "Content-Length 不合法")
+                if length > MAX_BODY:
+                    if length <= DRAIN_LIMIT:
+                        self._discard(length)
+                        body_read = True
+                    raise ApiError(413, "TOO_LARGE", "请求体过大")
+                raw = self.rfile.read(length)
+                body_read = True
+                try:
+                    body = json.loads(raw or b"{}")
                 except ValueError:
                     raise ApiError(400, "BAD_REQUEST", "请求体不是合法 JSON") from None
                 result = app.run(self._client_ip(), body)
                 self._json(200, result)
             except ApiError as exc:
-                extra = {"Retry-After": str(exc.retry_after)} if exc.retry_after else None
-                self._json(exc.status, exc.body(), extra)
+                extra = {"Retry-After": str(exc.retry_after)} if exc.retry_after else {}
+                if exc.status == 413 or not body_read:
+                    extra.update(close)
+                self._json(exc.status, exc.body(), extra or None)
+                if not body_read:
+                    self._linger()
+            except CLIENT_GONE:
+                raise
             except Exception as exc:  # 兜底：不把堆栈暴露给访客
                 print(f"[error] /api/run {type(exc).__name__}: {exc}", file=sys.stderr, flush=True)
-                self._json(500, {"ok": False, "error": {"code": "INTERNAL_ERROR", "message": "服务内部错误，已切换到回放", "fallback": "replay"}})
+                self._json(500, {"ok": False, "error": {"code": "INTERNAL_ERROR", "message": "服务内部错误，可以先看回放", "fallback": "replay"}},
+                           None if body_read else close)
+                if not body_read:
+                    self._linger()
+
+        def _discard(self, length: int) -> None:
+            while length > 0:
+                chunk = self.rfile.read(min(65536, length))
+                if not chunk:
+                    break
+                length -= len(chunk)
+
+        def _linger(self) -> None:
+            """请求体没读就要关连接时：先关写端，再读掉对方还在发的数据（最多 1 秒、1 MB），免得对方收到 RST、看不到响应。"""
+            try:
+                self.connection.shutdown(socket.SHUT_WR)
+                self.connection.settimeout(1.0)
+                got = 0
+                while got < DRAIN_LIMIT:
+                    data = self.connection.recv(65536)
+                    if not data:
+                        break
+                    got += len(data)
+            except OSError:
+                pass
 
         def log_message(self, fmt: str, *args) -> None:
             ip_tag = hashlib.sha256(self._client_ip().encode()).hexdigest()[:8]
-            print(f"{datetime.now(CST).isoformat(timespec='seconds')} {ip_tag} {fmt % args}", file=sys.stderr, flush=True)
+            msg = fmt % args
+            if len(msg) > 300:  # 畸形请求行可能很长，只记开头，不把整段内容写进日志
+                msg = f"{msg[:300]}…（已截断，共 {len(msg)} 字符）"
+            print(f"{datetime.now(CST).isoformat(timespec='seconds')} {ip_tag} {msg}", file=sys.stderr, flush=True)
 
     return Handler
 

@@ -21,7 +21,7 @@
 | 服务 | `xiaoying-agent.service`：User=caddy，只监听 `127.0.0.1:8710`；`ProtectSystem=strict`，只有 `state/` 可写；`/srv/shuling`、`/var/lib/caddy`、`/etc/caddy` 对它不可见；`MemoryMax=300M`（实际约 40M）；`systemd-analyze security` 评分 4.6 |
 | 目录 | `/srv/xiaoying-agent/`：`app/`（代码，root 所有、对服务只读）、`app.prev/`（上一版，用于回滚）、`venv/`、`state/`（caddy 可写，只有每日计数 `quota.json`）、`.env`（root 600） |
 | Caddy | 在 `/etc/caddy/Caddyfile` 末尾追加了 `q1-asset-scheduling/deploy/Caddyfile.xiaoying` 的站点块，没有改动已有内容。修改前的备份：`/etc/caddy/Caddyfile.bak-20261110-223022` |
-| 防护 | 无需口令，打开即可新建任务（真实模型现场运行）；每个 IP 5 次/600 秒；每天 50 次（落盘，跨重启累计）；并发 2。超限时页面自动切到回放 |
+| 防护 | 无需口令，打开即可新建任务（真实模型现场运行）；每个 IP 5 次/600 秒；每天 50 次（落盘，跨重启累计）；并发 2。超限时页面给出提示和对应场景的回放入口 |
 | 版本 | `/api/health` 的 `version` 字段是部署时 main 分支的提交短 SHA |
 
 **已验证**（都在服务器上经公网 DNS 完成）：

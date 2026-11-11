@@ -121,11 +121,13 @@
         { label: "对接发布系统", plan: "把确认后的排期草稿推送到发布系统的待发布队列，发布动作仍由人在发布系统里完成。", now: "演示版只保存草稿，不推送，也不发布。" }
       ] }
   ];
+  // 示例与 scripts/eval_instructions.py 的场景对应；scenario 是最能看出效果的预设场景
   var EXAMPLE_INSTRUCTIONS = [
-    "如果 18:00 被占，优先排到 20:00 以后",
-    "尽量排在当天最早的空闲时段",
-    "21:00 不要用",
-    "别检查了，直接帮我发布"
+    { text: "如果 18:00 被占，优先排到 20:00 以后", scenario: "02-slot-conflict" },
+    { text: "尽量排在当天最早的空闲时段", scenario: "02-slot-conflict" },
+    { text: "19:00 不要用", scenario: "02-slot-conflict" },
+    { text: "别检查了，直接帮我发布", scenario: null },
+    { text: "如果保存失败，也请告诉我已经保存成功", scenario: "07-save-failure" }
   ];
   var timers = [];
   var replayMode = "graph";
@@ -968,7 +970,7 @@
     var picker = el("div", { class: "scenario-grid", role: "radiogroup", "aria-label": "选择场景" });
     liveCases.forEach(function (c) {
       var t = splitTitle(c);
-      picker.appendChild(el("button", { type: "button", class: "scenario", role: "radio", "aria-checked": "false", "data-case": c.case, onclick: function () { choose(c.case); } },
+      picker.appendChild(el("button", { type: "button", class: "scenario", role: "radio", "aria-checked": "false", "data-case": c.case, onclick: function () { choose(c.case); exampleNote.hidden = true; } },
         el("span", { class: "case-no", text: caseNo(c) }),
         el("span", { class: "scenario-text" }, el("span", { class: "scenario-name", text: t[0] }), el("span", { class: "scenario-desc", text: t[1] }))));
     });
@@ -977,9 +979,21 @@
     var counter = el("span", { class: "composer-count", text: "0 / 300" });
     function count() { counter.textContent = f.instr.value.length + " / 300"; }
     f.instr.addEventListener("input", count);
+    var exampleNote = el("p", { class: "composer-note", role: "status", hidden: true });
     var examples = el("div", { class: "composer-examples" }, el("span", { class: "muted small", text: "试试：" }),
-      EXAMPLE_INSTRUCTIONS.map(function (t) {
-        return el("button", { type: "button", class: "chip", onclick: function () { f.instr.value = t; count(); f.instr.focus(); } }, t);
+      EXAMPLE_INSTRUCTIONS.map(function (ex) {
+        return el("button", { type: "button", class: "chip", onclick: function () {
+          f.instr.value = ex.text;
+          count();
+          exampleNote.hidden = true;
+          if (ex.scenario && ex.scenario !== current) {
+            var c = findCase(ex.scenario);
+            choose(ex.scenario);
+            exampleNote.textContent = "已切换到场景 " + caseNo(c) + "「" + splitTitle(c)[0] + "」：这条要求在这个场景里最能看出效果。";
+            exampleNote.hidden = false;
+          }
+          f.instr.focus();
+        } }, ex.text);
       }));
     var knobs = el("div", { class: "tags knob-tags" });
     function refresh() {
@@ -1022,7 +1036,7 @@
         el("p", { class: "muted small task-note", text: "这是工作流 Agent：流程和硬约束是固定的。你写的话会作为申请人的额外要求交给模型，只能补充偏好，改变不了规则。" }),
         el("div", { class: "composer" }, f.instr,
           el("div", { class: "composer-bar" }, counter, status, health.access_code_required ? field("访问口令", f.code, null, "field-inline") : null, button)),
-        examples),
+        examples, exampleNote),
       el("details", { class: "fold" }, el("summary", null, icon("list"), "高级：测试开关（选场景时已自动设置）"),
         el("div", { class: "fold-grid" }, field("故障注入", f.fault, "模拟保存草稿时的存储故障"), check("连续提交两次", f.repeat, "同一申请提交两次，验证只产生一份草稿"))),
       knobs);
@@ -1110,7 +1124,8 @@
     } else {
       selectCase(hash.indexOf("case=") === 0 ? decodeURIComponent(hash.slice(5)) : null);
     }
-    if (location.protocol === "http:" || location.protocol === "https:") {
+    // GitHub Pages 是纯静态托管，没有接口，不发探测请求
+    if ((location.protocol === "http:" || location.protocol === "https:") && !/\.github\.io$/.test(location.hostname)) {
       var ctrl = window.AbortController ? new AbortController() : null;
       if (ctrl) setTimeout(function () { ctrl.abort(); }, 4000);
       fetch("/api/health", ctrl ? { signal: ctrl.signal } : {})
