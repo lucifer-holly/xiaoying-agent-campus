@@ -26,6 +26,18 @@
 | AI 辅助范围与本人贡献 | [`docs/04-ai-usage.md`](docs/04-ai-usage.md) |
 | 需求 / 方案 / 评估 / AI 使用 / 复盘 | [`docs/`](docs/) |
 
+## 演示截图
+
+截图来自电脑浏览器（1440 像素宽）；回放和运行结果都是真实模型的运行。演示只是补充，评审以代码和 `examples/` 为准。
+
+![首页：核心卖点、技术路线和“模型做决策，代码守边界”](docs/screenshots/01-home.png)
+
+| 运行回放：每次运行画成节点图，连线上是模型的决定和理由（用例 02） | 两次运行对比：申请单只差一个日期，第 3 步起走了两条路 |
+|---|---|
+| <img src="docs/screenshots/02-replay-graph.png" alt="运行回放的节点图" width="100%"> | <img src="docs/screenshots/03-compare-graph.png" alt="两次运行对比的分叉图" width="100%"> |
+| **新建任务：选场景、填申请单，还能用一句话补充要求** | **运行结果：模型按补充说明选了 21:00，存为待确认草稿** |
+| <img src="docs/screenshots/04-new-task.png" alt="新建任务窗口" width="100%"> | <img src="docs/screenshots/05-task-result.png" alt="新建任务的运行结果" width="100%"> |
+
 ## 验收清单
 
 | 要求 | 证据 |
