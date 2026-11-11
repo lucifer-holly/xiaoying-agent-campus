@@ -30,7 +30,7 @@
 | 字段 | 说明 |
 |---|---|
 | `request` | 申请单：`request_id`、`asset_id`、`channel`、`publish_at`（`YYYY-MM-DD HH:MM`）、`requester`、`note`、`constraints.date_fixed` |
-| `request.instructions` | 可选，申请人的补充说明（最多 300 字），例如“如果 18:00 被占，优先排到 20:00 以后”。它只作为偏好交给模型，不能突破硬性约束，见 docs/02 第 8 节 |
+| `request.instructions` | 可选，申请人的补充说明（最多 300 字），例如“如果 18:00 被占，优先排到 20:00 以后”。它只作为偏好交给模型，不能突破硬性约束，见 docs/02 第 1、3 节 |
 | `fault_injection` | 可选，故障注入，例如 `{"save_draft": "error"}`；模式见 `src/domain/faults.py` |
 | `options` | 可选，`max_steps`、`max_tool_calls`、`repeat`（同一申请连续提交几次） |
 | `expected` | 验收预期，只给测试和录制脚本用，**不会发给模型** |

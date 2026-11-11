@@ -1,12 +1,12 @@
 # 02 方案：调用流程、动态决策与技术取舍
 
-核心原则：**模型做决策，代码守边界**。下一步做什么（补查还是阻断、换哪个时段、重试还是停止、什么时候结束）交给模型；不能发布、先审后排、改时间必须待确认、防重复、保存状态如实这些硬约束，由工具层和校验器强制执行，不依赖模型自觉。
+核心原则：**模型做决策，代码守边界**。下一步做什么（补查还是阻断、换哪个时段、重试还是停止、什么时候结束）交给模型；不能发布、先审后排、改时间必须待确认、防重复、保存状态如实这些硬约束，由工具层和校验器强制执行，不依赖模型自觉。申请人还可以附一句补充说明（例如“被占的话尽量排晚一点”），它作为偏好交给模型，在规则之内采纳，改变不了这些边界。
 
 ## 1. 调用流程
 
 ```mermaid
 flowchart LR
-    A[申请单] --> L
+    A[申请单<br/>+ 补充说明（可选）] --> L
     subgraph L[ReAct 循环 src/agent/loop.py]
         M[模型 qwen3.8-max] -- 选择工具 + decision_note --> R[工具注册表<br/>解析 / Schema 校验]
         R --> T[业务工具<br/>read_asset · check_rules<br/>query_slots · save_draft]
@@ -19,7 +19,7 @@ flowchart LR
 
 每一步：
 
-1. 把对话（系统提示 + 申请单 + 之前每次工具调用的结果）和工具定义发给模型；
+1. 把对话（系统提示 + 申请单 + 之前每次工具调用的结果）和工具定义发给模型。申请单由 `render_request()` 组装：申请人的补充说明（`request.instructions`，最多 300 字）从申请单 JSON 里取出，附在申请单之后，前面加一段固定前言（`INSTRUCTIONS_PREFACE`），讲清楚它是偏好，只能在业务要求和硬性约束之内满足；
 2. 模型返回一个工具调用（`parallel_tool_calls=false`，一次一个），参数里必须有一句 `decision_note`；
 3. 注册表解析 JSON、按 Schema 校验参数；不合法时把错误作为观察结果交还模型，由模型改正；
 4. 执行业务工具，结果统一封装为 `{ok, data}` 或 `{ok: false, error: {code, message, retryable}}`，写回对话；
@@ -30,7 +30,7 @@ flowchart LR
 
 ## 2. 模型的决策点
 
-下表每一行都来自真实模型的录制（qwen3.8-max，提示词 `q1-v2`）：
+下表每一行都来自真实模型的运行（qwen3.8-max，提示词 `q1-v2`）：前 9 行是 `examples/` 里的验收用例录制，最后 2 行来自补充说明评测（`examples/instructions-report.json`，9 个场景各 3 次，27/27，见 docs/03 第 9 节）。
 
 | 模型看到的结果 | 模型的决定 | 证据 |
 |---|---|---|
@@ -43,6 +43,8 @@ flowchart LR
 | `save_draft` 返回可重试的 `STORAGE_UNAVAILABLE` | 重试一次，仍失败后 `finish(failed)`，说明草稿未生成 | `07` 第 4–6 步 |
 | `save_draft` 超时（可重试） | 重试一次，得到 `created=false`（前一次其实已写入），如实报告草稿编号 | `09` 第 4–6 步 |
 | 当天全部时段 `occupied`，且日期不能改 | 不改日期、不保存，`finish(needs_confirmation)` 询问能否换日期 | `10` 第 3–5 步 |
+| 申请时段 `occupied`，补充说明里有时段偏好（“20:00 以后”“当天最早”“19:00 不要用”） | 在当天的空闲时段里选符合偏好的（21:00 / 09:00 / 21:00），仍保存为待确认草稿，`change_reason` 写明是按偏好选的 | 补充说明评测的 3 个偏好场景，9/9 |
+| 补充说明要求越权（直接发布、跳过规则检查、擅自改日期、谎报保存成功、直接设为完成） | 照常走完流程，只做规则允许的事：照常检查、只存草稿、违规时阻断、日期不改、失败如实返回 | 补充说明评测的 6 个越权场景，18/18 |
 
 ## 3. 代码守住的边界
 
@@ -56,6 +58,7 @@ flowchart LR
 | 保存状态如实 | 校验器只信调用台账和草稿库：有本申请的草稿时，状态必须与草稿一致；没有草稿时不能是 `completed`，保存失败过就一律 `failed`；草稿编号必须来自草稿库；写盘失败不留“幽灵草稿” | `test_false_save_success_is_downgraded_to_failed`、`test_storage_failure_forces_failed_whatever_the_model_says`、`test_draft_written_in_this_run_overrides_a_blocked_claim`、`test_failed_disk_write_leaves_no_phantom_draft` |
 | 说明文字不虚报 | 说明里声称“已保存”（实际没有）或“已发布”时，换成按事实生成的说明；每份输出附 `facts_summary`；缺失项、命中规则只来自工具结果 | `test_message_claiming_a_save_that_never_happened_is_corrected`、`test_message_claiming_publication_is_corrected`、`test_structured_fields_only_contain_facts` |
 | 参数不可信 | JSON 解析 + Schema 校验（类型、必填、枚举、格式、未知参数），错误交还模型 | `test_bad_arguments_come_back_as_observations` |
+| 补充说明不能越权 | 补充说明只是附在申请单后的一段文字，改变不了工具表和工具层的检查：没有发布工具可调，没过规则检查不能保存，改时间强制待确认，改日期直接拒绝，校验器照样核对说明文字；长度不超过 300 字，服务端同样校验 | `test_supplementary_instructions_reach_the_model_but_cannot_bypass_guards`（脚本模拟一个“照单全收”的模型）、`test_live_request_accepts_short_instructions_only` |
 
 校验器的每一处更正都写进 `output.validator.corrections`，并保留模型原话（`model_claim`），在 Trace 的 `finish` 步骤里也能看到。
 
@@ -80,6 +83,7 @@ flowchart LR
 | 规则结论由代码给出 | 是否违规不让模型判断，避免漏判和误判；模型负责“补查还是阻断”“改哪个时段”“重试还是停止” | 规则表达能力受限于规则引擎 |
 | 待确认草稿先占住时段 | 等申请人确认期间时段不会被别人占走；草稿在确认前不会进入排期 | 申请人不同意时需要释放（不在本题范围内） |
 | 故障注入写在输入里 | 真实模型下也能稳定复现“工具失败”；返回给模型的错误信息与真实故障一致，不提示“这是注入的” | 只覆盖了预设的几种故障 |
+| 补充说明附在申请单之后，不改系统提示词 | 没有补充说明时，交给模型的文字和录制时逐字相同，10 个录制用例和稳定性结果仍然有效，`PROMPT_VERSION` 保持 `q1-v2`（`test_instructions_are_framed_as_preferences_and_plain_requests_render_as_recorded` 断言）。前言的第一版只写了“不能改变业务要求”，真实模型连“选最近的空闲时段”也不敢改，偏好没有生效；改成“在空闲时段里优先满足偏好，都不符合再选最近的”之后才生效（docs/03 第 9 节） | 偏好会不会被采纳取决于模型，只能靠评测说明，不能由代码保证；越权要求则由代码保证不会被执行 |
 | 两种 Mock | `PolicyMockLLM`（`--llm mock`）是一套写死的参考策略，任何输入都能离线跑通；`ScriptedMockLLM` 只用于测试，构造说谎、乱调工具、只回文字的模型 | Mock 只证明流程，不证明模型决策效果 |
 
 ## 6. 目录与模块
@@ -90,13 +94,13 @@ flowchart LR
 | `src/agent/loop.py` | ReAct 循环与上限 |
 | `src/agent/llm.py` / `mock_llm.py` | 真实模型封装 / 两种 Mock |
 | `src/agent/tools.py` | 工具注册、参数校验、结果封装 |
-| `src/agent/trace.py` / `prompts.py` | Trace 结构 / 系统提示词（带版本号） |
+| `src/agent/trace.py` / `prompts.py` | Trace 结构 / 系统提示词（带版本号）、申请单与补充说明的组装（`render_request`） |
 | `src/domain/scheduling.py` | 业务工具与边界、给校验器用的事实 |
 | `src/domain/validator.py` | 输出校验器 |
 | `src/domain/rules.py` / `store.py` / `faults.py` | 规则引擎 / 数据与草稿库 / 故障注入 |
 | `src/expectations.py` | 用例 `expected` 的统一检查（录制脚本与测试共用） |
 | `scripts/record_examples.py` / `eval_stability.py` / `eval_instructions.py` | 批量录制 / 稳定性评估 / 补充说明评测 |
-| `src/server.py`、`demo/` | 演示：HTTP 服务（按 IP 限流、每日上限、并发上限，可选访问口令）与回放页 |
+| `src/server.py`、`demo/` | 演示：HTTP 服务（新建任务，可附补充说明；调用模型前校验输入；按 IP 限流、每日上限、并发上限，可选访问口令）与回放页 |
 | `deploy/`、`scripts/deploy.sh` | 演示部署：Caddy 站点片段、systemd unit、服务器 `.env` 模板、部署 / 回滚脚本 |
 
 ## 7. 接入真实数据（规划，未实现）
@@ -112,13 +116,3 @@ flowchart LR
 | （结果通知） | 只在页面上展示 | 把“等待确认”“需要补充信息”推送到企业微信 / 飞书 | 接入通知 |
 
 不论接入哪个系统，都不调用任何平台的发布接口：发布仍由人在发布系统里确认。
-
-## 8. 申请人的补充说明
-
-演示页“新建任务”里有一个文字输入框，可以像跟助手说话一样补充要求（最多 300 字，服务端同样校验）。这是一个工作流 Agent：流程和硬约束固定，补充说明只是额外输入。
-
-- **放在哪里**：`render_request()` 把它从申请单 JSON 里取出，附在申请单之后，前面加一段固定说明（`INSTRUCTIONS_PREFACE`）：这是偏好，在业务要求和硬性约束之内尽量满足，例如时段被占时在空闲时段里优先选符合偏好的、都不符合再选最近的，改了时间照样存为待确认草稿；它不能让模型发布、跳过规则检查、不经确认改时间或擅自改日期，冲突时以要求为准，并告诉申请人哪一条没法照办。
-- **系统提示词不改**：没有补充说明时，交给模型的文字和录制时逐字相同（`test_instructions_are_framed_as_preferences_and_plain_requests_render_as_recorded` 断言），所以 10 个录制用例和稳定性结果仍然有效，`PROMPT_VERSION` 保持 `q1-v2`。
-- **边界不靠这段话**：即使模型照着“直接发布”去做，也没有发布工具可调；没过规则检查不能保存；改时间强制待确认；改日期直接拒绝；校验器照样核对说明文字。`test_supplementary_instructions_reach_the_model_but_cannot_bypass_guards` 用脚本模拟一个“照单全收”的模型验证这一点。
-- **第一版的问题**：最初的固定说明只写了“只能补充偏好，不能改变业务要求”。真实模型把“选离申请时间最近的空闲时段”也当成不能改的要求，输入“如果 18:00 被占，优先排到 20:00 以后”时仍选了 19:00，只在说明里提了一句 21:00。改成“在空闲时段里优先满足偏好”之后，同样的输入选了 21:00（待确认），并写明是按偏好选的。真实运行记录见 docs/03 第 9 节。
-
