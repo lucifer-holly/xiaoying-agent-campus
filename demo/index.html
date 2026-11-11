@@ -9,7 +9,7 @@
   <link rel="icon" href="data:,">
   <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body data-view="replay">
   <header class="hero">
     <div class="hero-ribbons" aria-hidden="true"><span></span><span></span><span></span></div>
     <div class="hero-inner">
@@ -21,11 +21,14 @@
       </nav>
       <p class="eyebrow">小影校招 · AI Agent 开发岗考核作品</p>
       <h1>素材审核与发布排期 Agent</h1>
-      <p class="lede">读素材、做规则检查、查发布时段、保存排期草稿。每一步做什么由模型根据工具结果决定，越权发布、虚报保存、重复草稿由代码拦住。</p>
-      <p class="hero-label">核心卖点</p>
-      <ul class="usp" id="usp" aria-label="核心卖点"></ul>
-      <p class="hero-label">技术路线</p>
-      <ul class="stats" id="stats" aria-label="技术路线"></ul>
+      <p class="mobile-note">这个演示页按电脑浏览器设计，手机上节点图和表格显示不完整，建议用电脑打开。</p>
+      <!-- 导语、核心卖点、技术路线只在“运行回放”页显示；切到其他页签时收起，不占位置 -->
+      <div class="hero-intro">
+        <p class="lede">读素材、做规则检查、查发布时段、保存排期草稿。每一步做什么由模型根据工具结果决定，越权发布、虚报保存、重复草稿由代码拦住。</p>
+        <p class="hero-label">核心卖点</p>
+        <ul class="usp" id="usp" aria-label="核心卖点"></ul>
+        <div class="tech-line"><span class="hero-label tech-label">技术路线</span><ul class="stats" id="stats" aria-label="技术路线"></ul></div>
+      </div>
       <div class="hero-actions">
         <div class="tabs" role="tablist" aria-label="视图">
           <button type="button" role="tab" data-view="replay" aria-selected="true">运行回放</button>

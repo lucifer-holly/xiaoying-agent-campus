@@ -21,7 +21,7 @@
 | 代码边界与校验器 | [`src/domain/scheduling.py`](src/domain/scheduling.py)、[`src/domain/validator.py`](src/domain/validator.py) |
 | 测试结果 | [`examples/test-results.txt`](examples/test-results.txt) |
 | 补充说明：偏好能改变选择、越权要求不会被执行 | [`examples/instructions-report.json`](examples/instructions-report.json)，说明见 [`docs/03-evaluation.md`](docs/03-evaluation.md) 第 9 节 |
-| 演示（补充体验，不替代命令行） | 回放页：<https://lucifer-holly.github.io/xiaoying-agent-campus/demo/>（静态，也可本地双击 [`demo/index.html`](demo/index.html)）；实时演示：<https://xiaoying.gret.me/>，说明见下方“演示” |
+| 演示（补充体验，不替代命令行） | 回放页：<https://lucifer-holly.github.io/xiaoying-agent-campus/demo/>（静态，也可本地双击 [`demo/index.html`](demo/index.html)）；实时演示：<https://xiaoying.gret.me/>，说明见下方“演示”。**请用电脑浏览器打开**，手机上显示效果很差 |
 | 自己改输入复测：更换占用时段、重复提交 | 下方“评审自测” |
 | AI 辅助范围与本人贡献 | [`docs/04-ai-usage.md`](docs/04-ai-usage.md) |
 | 需求 / 方案 / 评估 / AI 使用 / 复盘 | [`docs/`](docs/) |
@@ -179,6 +179,8 @@ rm -f self-1200.input.json state/self-test.json
 ## 演示
 
 演示是补充体验，命令行仍是主入口。截图和录屏不能替代代码，评审请以上面的命令和 `examples/` 为准。
+
+> **请用电脑浏览器打开演示页**（窗口宽度 1280 像素以上效果最好）。页面按电脑屏幕设计，手机上节点图、对比视图和表单都会挤在一起，显示效果很差；用手机打开时页面顶部也会给出这条提示。
 
 - **回放页**：`demo/index.html` 把 `examples/` 里真实模型的每次运行画成可点击的节点图（默认），也可以切换成步骤列表。节点是工具返回的结果，节点之间的说明是模型写下的决策依据（`decision_note`，整段显示）；点节点或说明，旁边显示完整的参数、返回和耗时，“逐步播放”按顺序走一遍。用例列表最后是“两次运行对比”：01 与 02 只差一个日期，图里标出前两步相同、第 3 步工具结果不同、之后两条分支各自的决定；另一组对比提示词 q1-v1 与 q1-v2。在线版：<https://lucifer-holly.github.io/xiaoying-agent-campus/demo/>（GitHub Pages）；本地直接双击打开也可以。数据由 `python scripts/build_demo.py` 从 `examples/` 生成，不做任何修改。
 - **在线演示**：<https://xiaoying.gret.me/>。页面与回放页相同，多一个“新建任务”：选一个场景或自己填申请单，还可以在文字框里补充要求（例如“如果 18:00 被占，优先排到 20:00 以后”，最多 300 字），用真实模型现场跑一次，结果同样画成节点图。补充说明作为申请人的偏好交给模型，改变不了代码守住的边界（见 [docs/02](docs/02-solution.md) 第 1、3 节）。无需口令，按 IP 限流、有每日上限和并发上限，超限时页面给出提示和对应场景的回放入口。每次运行使用独立的内存草稿库，**只保存草稿，不会真实发布**。

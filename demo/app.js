@@ -221,9 +221,9 @@
   }
   function renderUSP() {
     var items = [
-      ["eye", "Agent 不是黑盒", "每一步调用了哪个工具、带什么参数、模型给出的理由、工具返回了什么，都写进运行记录，可以逐步回放复查。", "看运行回放", "replay"],
-      ["shield", "过程可控", "关键约束写在代码里，不靠提示词：没有发布工具、先审后排、改时间必须确认、日期不擅自改、按申请内容防重复、步数有上限，最终状态以草稿库为准。", "看代码守住的边界", "pipeline"],
-      ["branch", "运行节点可视化", "每次运行都画成节点图：点节点看工具返回，点连线看模型为什么这样做；两次运行在哪一步分叉、为什么分叉，一眼就能看清。", "看两次运行怎么分叉", "case:cmp-date"]
+      ["eye", "Agent 不是黑盒", "每一步用了哪个工具、什么参数、模型的理由和工具返回，都有记录，可以逐步回放。", "看运行回放", "replay"],
+      ["shield", "过程可控", "关键约束写在代码里：不能发布、先审后排、改时间要确认、日期不擅改、防重复、步数有上限。", "看代码守住的边界", "pipeline"],
+      ["branch", "运行节点可视化", "每次运行都画成节点图：点节点看工具返回，点连线看模型的理由，在哪一步分叉一眼看清。", "看两次运行怎么分叉", "case:cmp-date"]
     ];
     var box = document.getElementById("usp");
     box.replaceChildren.apply(box, items.map(function (it) {
@@ -232,7 +232,7 @@
     }));
   }
   function renderStats() {
-    var items = [["模型", DATA.model || "—"], ["技术路线", "ReAct 循环 + Function Calling"], ["验收用例", DATA.cases.length + " 个，均为真实模型录制"]];
+    var items = [["模型", DATA.model || "—"], ["方式", "ReAct 循环 + Function Calling"], ["验收用例", DATA.cases.length + " 个，均为真实模型录制"]];
     var box = document.getElementById("stats");
     box.replaceChildren.apply(box, items.map(function (it) {
       return el("li", null, el("span", { class: "stat-label", text: it[0] }), el("span", { class: "stat-value", text: it[1] }));
@@ -1136,6 +1136,7 @@
 
   // ---- 视图切换与启动 ------------------------------------------------------------
   function showView(name) {
+    document.body.setAttribute("data-view", name);  // 介绍区和流程卡只在回放页显示，见 style.css
     if (name !== "replay") clearTimers("replay");
     if (name !== "task") clearTimers("task");
     ["replay", "data", "task"].forEach(function (v) {
