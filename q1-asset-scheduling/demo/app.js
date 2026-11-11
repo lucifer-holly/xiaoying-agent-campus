@@ -74,6 +74,8 @@
     expand: '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>',
     branch: '<circle cx="6" cy="5" r="2"/><circle cx="6" cy="19" r="2"/><circle cx="18" cy="9" r="2"/><path d="M6 7v10"/><path d="M18 11c0 4-6 3.5-11.2 6.4"/>',
     eye: '<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+    upload: '<path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/>',
+    link: '<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',
     bulb: '<path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.6.4 1 1.1 1 1.8V16h5v-.3c0-.7.4-1.4 1-1.8A6 6 0 0 0 12 3z"/>'
   };
   var timers = [];
@@ -169,15 +171,18 @@
     }));
   }
   function renderPipeline() {
+    var SOURCES = { read_asset: "数据：素材库", check_rules: "数据：内容规则 · 版权库", query_slots: "数据：发布日历", save_draft: "写入：排期草稿", finish: "交给申请人确认" };
     var flow = el("ol", { class: "flow" }, ["read_asset", "check_rules", "query_slots", "save_draft", "finish"].map(function (t) {
       return el("li", { class: "flow-step tool-" + t }, icon(TOOLS[t].icon, "flow-icon"),
-        el("span", { class: "flow-text" }, el("span", { class: "flow-cn", text: TOOLS[t].label }), el("code", { class: "flow-en", text: t })));
+        el("span", { class: "flow-text" }, el("span", { class: "flow-cn", text: TOOLS[t].label }), el("code", { class: "flow-en", text: t }),
+          el("span", { class: "flow-src", text: SOURCES[t] })));
     }));
     var guards = ["没有发布工具，只保存草稿", "先通过规则检查才能保存", "改时间一律标记待确认", "日期硬约束不擅自改", "按申请内容幂等，防重复", "最终状态以草稿库为准"];
     document.getElementById("pipeline").appendChild(el("div", { class: "pipeline-card" },
       el("div", { class: "pipeline-head" },
         el("h2", { text: "模型做决策，代码守边界" }),
-        el("p", { class: "muted small", text: "每一步由模型根据上一步的工具结果决定；下面这些约束由代码强制执行，不依赖模型自觉。" })),
+        el("p", { class: "muted small", text: "每一步由模型根据上一步的工具结果决定；下面这些约束由代码强制执行，不依赖模型自觉。" }),
+        el("button", { type: "button", class: "link-btn pipeline-link", onclick: function () { goTo("data"); } }, "数据从哪里来：查看数据接入", icon("arrow"))),
       flow,
       el("ul", { class: "guards" }, guards.map(function (g) { return el("li", null, icon("shield"), g); }))
     ));
@@ -777,6 +782,95 @@
     });
   }
 
+  // ---- 数据接入：真实系统的接入入口（规划中，尚未实现）--------------------------------
+  var DATA_SOURCES = [
+    { group: "Agent 读取的数据", name: "素材库", icon: "file", tools: ["read_asset"], status: "演示数据",
+      desc: "素材的标题、文案、封面、时长、背景音乐和授权状态。",
+      actions: [
+        { label: "导入素材", plan: "支持从本地文件（Excel / CSV）或素材库批量导入，导入后自动做一次规则检查，有问题的素材直接标出来。", now: "演示版内置 7 条示例素材（M01–M07）。" },
+        { label: "连接素材库", plan: "通过素材库 / DAM 的开放接口实时读取素材，素材更新后自动重新审核。", now: "演示版内置 7 条示例素材。" }
+      ] },
+    { group: "Agent 读取的数据", name: "发布日历", icon: "calendar", tools: ["query_slots", "save_draft"], status: "演示数据",
+      desc: "抖音、视频号、小红书每天的发布时段和占用情况。",
+      actions: [
+        { label: "导入日程表", plan: "从 Excel 或日历文件导入已有排期，作为时段占用的依据。", now: "演示版内置 11/12–11/15 的示例日程。" },
+        { label: "同步渠道日程", plan: "定时同步各渠道账号里已经排期的内容，避免和线上排期冲突。", now: "演示版不连接任何渠道账号。" }
+      ] },
+    { group: "Agent 读取的数据", name: "内容规则", icon: "shield", tools: ["check_rules"], status: "演示数据",
+      desc: "必填信息、绝对化用语、音乐版权、渠道格式、标题长度等审核规则。",
+      actions: [
+        { label: "管理规则", plan: "在页面上新增、停用、调整规则和敏感词表，每次改动留痕、可以回滚。", now: "演示版内置 5 条示例规则。" }
+      ] },
+    { group: "Agent 读取的数据", name: "版权库", icon: "lock", tools: ["check_rules"], status: "演示数据",
+      desc: "背景音乐等素材的授权记录，规则检查需要补查时查询。",
+      actions: [
+        { label: "连接版权系统", plan: "对接法务 / 版权管理系统，补查时读取最新的授权状态和授权渠道。", now: "演示版内置 4 条示例授权记录。" }
+      ] },
+    { group: "对外接入", name: "渠道账号", icon: "channel", status: "未接入",
+      desc: "绑定抖音、视频号、小红书账号，用来同步线上已排期的内容。",
+      actions: [
+        { label: "绑定账号", plan: "通过各平台的开放平台授权绑定账号，只读取排期信息，不调用发布接口。", now: "未接入。" }
+      ] },
+    { group: "对外接入", name: "消息通知", icon: "note", status: "未接入",
+      desc: "需要申请人确认或补充信息时，及时通知到人。",
+      actions: [
+        { label: "接入通知", plan: "把“等待确认”“需要补充信息”推送到企业微信 / 飞书，申请人点一下就能确认或补充。", now: "未接入，结果只在页面上展示。" }
+      ] },
+    { group: "对外接入", name: "发布系统", icon: "save", status: "未接入",
+      desc: "排期草稿交给发布系统，由人工确认后发布；Agent 自身没有发布能力。",
+      actions: [
+        { label: "对接发布系统", plan: "把确认后的排期草稿推送到发布系统的待发布队列，发布动作仍由人在发布系统里完成。", now: "演示版只保存草稿，不推送，也不发布。" }
+      ] }
+  ];
+  function sourceByName(name) { return DATA_SOURCES.filter(function (s) { return s.name === name; })[0]; }
+  function showPlan(source, action) {
+    var dlg = document.getElementById("plan-dialog");
+    if (!dlg) {
+      dlg = el("dialog", { id: "plan-dialog", class: "plan-dialog", "aria-labelledby": "plan-title" });
+      dlg.addEventListener("click", function (ev) { if (ev.target === dlg) dlg.close(); });
+      document.body.appendChild(dlg);
+    }
+    dlg.replaceChildren(
+      el("div", { class: "plan-head" }, icon(source.icon, "plan-icon"),
+        el("div", null, el("p", { class: "panel-kicker" }, source.name, el("span", { class: "pill tone-muted", text: "规划中 · 尚未实现" })),
+          el("h3", { id: "plan-title", text: action.label }))),
+      el("p", { class: "plan-text" }, el("strong", { text: "接入后：" }), action.plan),
+      el("p", { class: "plan-text muted" }, el("strong", { text: "现在：" }), action.now),
+      el("form", { method: "dialog", class: "plan-actions" }, el("button", { type: "submit", class: "btn" }, "知道了")));
+    if (typeof dlg.showModal === "function") dlg.showModal();
+    else window.alert(action.label + "：规划中，尚未实现。" + action.now);
+  }
+  function planButton(sourceName, actionLabel, cls) {
+    var source = sourceByName(sourceName);
+    var action = source.actions.filter(function (a) { return a.label === actionLabel; })[0];
+    return el("button", { type: "button", class: cls || "btn btn-ghost btn-sm", onclick: function () { showPlan(source, action); } },
+      icon(actionLabel.indexOf("同步") >= 0 ? "repeat" : actionLabel.indexOf("导入") >= 0 ? "upload" : "link"), actionLabel);
+  }
+  var dataRendered = false;
+  function renderData() {
+    if (dataRendered) return;
+    dataRendered = true;
+    var view = document.getElementById("view-data");
+    var groups = [];
+    DATA_SOURCES.forEach(function (s) { if (groups.indexOf(s.group) < 0) groups.push(s.group); });
+    view.replaceChildren(el("header", { class: "cmp-intro" },
+      el("h2", { text: "数据接入" }),
+      el("p", { text: "Agent 通过四个工具读写数据：读素材、查规则和版权、查发布日历、写排期草稿。演示版用内置的示例数据跑通全流程；下面是接入真实系统的入口，目前都还没有实现。" })));
+    groups.forEach(function (g) {
+      view.appendChild(el("section", { class: "ds-group" },
+        el("h3", { class: "ds-group-title", text: g }),
+        el("div", { class: "ds-grid" }, DATA_SOURCES.filter(function (s) { return s.group === g; }).map(function (s) {
+          return el("article", { class: "card ds-card" },
+            el("div", { class: "ds-head" }, icon(s.icon, "ds-icon"),
+              el("div", null, el("h4", { text: s.name }), el("span", { class: "pill " + (s.status === "演示数据" ? "tone-info" : "tone-muted"), text: s.status }))),
+            el("p", { class: "ds-desc", text: s.desc }),
+            s.tools ? el("p", { class: "ds-tools" }, "用到它的工具：", s.tools.map(function (t) { return el("span", { class: "ds-tool tool-" + t }, icon(TOOLS[t].icon), TOOLS[t].label); })) : null,
+            el("div", { class: "ds-actions" }, s.actions.map(function (a) { return planButton(s.name, a.label); }),
+              el("span", { class: "ds-planned", text: "规划中" })));
+        }))));
+    });
+  }
+
   // ---- 实时运行 -----------------------------------------------------------------
   function renderLive(health) {
     var view = document.getElementById("view-live");
@@ -869,6 +963,9 @@
       el("h3", { class: "card-title" }, icon("play"), "第一步：选一个场景"),
       picker,
       el("h3", { class: "card-title step-two" }, icon("file"), "第二步：确认申请单，然后运行"),
+      el("div", { class: "source-bar" },
+        el("span", { class: "muted small", text: "素材和日程来自素材库、发布日历（演示数据）" }),
+        planButton("素材库", "导入素材"), planButton("发布日历", "同步渠道日程")),
       summary, knobs, editBox, advBox,
       health.access_code_required ? field("访问口令", f.code) : null,
       el("div", { class: "form-actions" }, button, status)
@@ -918,7 +1015,7 @@
 
   // ---- 视图切换与启动 ------------------------------------------------------------
   function showView(name) {
-    ["replay", "compare", "live"].forEach(function (v) {
+    ["replay", "compare", "live", "data"].forEach(function (v) {
       document.getElementById("view-" + v).hidden = v !== name;
       var tab = document.querySelector('.tabs [data-view="' + v + '"]');
       if (tab) tab.setAttribute("aria-selected", v === name ? "true" : "false");
@@ -934,6 +1031,7 @@
       tab.addEventListener("click", function () {
         var v = tab.getAttribute("data-view");
         if (v === "compare") renderCompare();
+        if (v === "data") renderData();
         showView(v);
         setHash("view=" + v);
         if (v === "compare") requestAnimationFrame(layoutGraphs);
@@ -947,6 +1045,7 @@
     if (hash.indexOf("view=") === 0) {
       selectCase(null, true);
       if (hash === "view=compare") { renderCompare(); showView("compare"); requestAnimationFrame(layoutGraphs); }
+      if (hash === "view=data") { renderData(); showView("data"); }
     } else {
       selectCase(hash.indexOf("case=") === 0 ? decodeURIComponent(hash.slice(5)) : null);
     }

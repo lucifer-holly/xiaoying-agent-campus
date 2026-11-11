@@ -143,6 +143,7 @@ a { color: var(--accent); }
 .pipeline { position: relative; z-index: 1; max-width: 1200px; margin: -64px auto 0; padding: 0 24px; }
 .pipeline-card { background: var(--panel); border-radius: var(--radius-lg); box-shadow: var(--shadow); padding: 22px 26px; border: 1px solid var(--line); }
 .pipeline-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 16px; margin-bottom: 16px; }
+.pipeline-head .link-btn { align-self: center; }
 .pipeline-head h2 { font-size: 18px; }
 .flow { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
 .flow-step {
@@ -484,6 +485,38 @@ pre {
   .gnode-title { font-size: 13px; }
   .gedge-label { max-width: 132px; font-size: 11px; padding: 2px 8px; }
 }
+
+/* 数据接入（规划中的入口） */
+.flow-src { margin-top: 3px; font-size: 11.5px; color: var(--muted); }
+.pipeline-link { margin-left: auto; }
+.btn-sm { padding: 5px 12px; font-size: 13px; }
+.btn-sm .icon { width: 14px; height: 14px; }
+.source-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0 0 12px; }
+.source-bar .muted { margin-right: 4px; }
+.ds-group { margin-bottom: 22px; }
+.ds-group-title { font-size: 14px; color: var(--muted); margin: 0 0 10px; letter-spacing: .5px; }
+.ds-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
+.ds-card { margin: 0; display: flex; flex-direction: column; gap: 10px; }
+.ds-head { display: flex; align-items: center; gap: 12px; }
+.ds-head h4 { font-size: 16px; margin-bottom: 2px; }
+.ds-icon { width: 40px; height: 40px; padding: 9px; border-radius: 12px; color: #1f2430; background: var(--brand-gradient); }
+.ds-desc { color: var(--text); font-size: 14px; }
+.ds-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 12.5px; color: var(--muted); }
+.ds-tool { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 999px; color: var(--tool); background: var(--tool-bg); font-weight: 600; }
+.ds-tool .icon { width: 13px; height: 13px; }
+.ds-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: auto; }
+.ds-planned { margin-left: auto; font-size: 12px; color: var(--muted); }
+.plan-dialog {
+  border: 0; border-radius: 20px; padding: 22px 24px; width: min(460px, calc(100% - 32px));
+  background: var(--panel); color: var(--text); box-shadow: 0 24px 60px rgba(31, 36, 48, 0.25);
+}
+.plan-dialog::backdrop { background: rgba(31, 36, 48, 0.45); }
+.plan-head { display: flex; gap: 12px; align-items: center; margin-bottom: 12px; }
+.plan-head .panel-kicker { flex-wrap: wrap; }
+.plan-head h3 { font-size: 18px; margin-top: 2px; }
+.plan-icon { width: 42px; height: 42px; padding: 9px; border-radius: 12px; color: #1f2430; background: var(--brand-gradient); }
+.plan-text { margin-top: 8px; line-height: 1.7; }
+.plan-actions { display: flex; justify-content: flex-end; margin-top: 18px; }
 
 /* 实时运行 */
 .live-intro { display: flex; gap: 14px; align-items: flex-start; }
