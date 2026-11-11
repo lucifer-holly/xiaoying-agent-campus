@@ -406,7 +406,7 @@
     var intro = el("section", { class: "card live-intro" }, icon("bolt"), el("div", null,
       el("h3", { text: "用真实模型现场跑一次" }),
       el("ul", null,
-        el("li", { text: "选一个预设用例，也可以改素材、时间、故障注入；模型 " + (health.model || "—") + "。" }),
+        el("li", { text: "选一个场景直接运行；模型 " + (health.model || "—") + "，通常 5~25 秒。" }),
         el("li", { text: "每次运行使用独立的内存草稿库，只读合成数据，只保存草稿，不会真实发布。" }),
         el("li", { text: "按 IP 限流：" + health.quota.per_ip + "；今天已用 " + health.quota.used_today + " / " + health.quota.daily_limit + " 次，超限时自动切回回放。" })
       )));
@@ -414,61 +414,113 @@
       view.append(intro, el("p", { class: "card", text: "实时运行未开启：服务端没有配置模型密钥。可以先看“运行回放”。" }));
       return;
     }
-    var presetSel = el("select", { id: "f-preset" }, DATA.cases.map(function (c) { return el("option", { value: c.case, text: caseNo(c) + " " + splitTitle(c)[0] }); }));
+    // 申请单字段（默认收起，只显示摘要）
     var f = {
       asset: el("input", { id: "f-asset", list: "asset-ids", maxlength: "12", required: true }),
       channel: el("select", { id: "f-channel" }, Object.keys(CHANNEL).map(function (k) { return el("option", { value: k, text: CHANNEL[k] }); })),
       date: el("input", { id: "f-date", type: "date", required: true }),
       time: el("select", { id: "f-time" }, ["09:00", "12:00", "18:00", "19:00", "20:00", "21:00"].map(function (t) { return el("option", { value: t, text: t }); })),
       fixed: el("input", { id: "f-fixed", type: "checkbox" }),
-      note: el("input", { id: "f-note", maxlength: "200" }),
+      note: el("input", { id: "f-note", maxlength: "200", placeholder: "可选" }),
       fault: el("select", { id: "f-fault" }, [["", "无"], ["error", "save_draft 一直失败"], ["error_once", "save_draft 第一次失败"], ["timeout_after_commit", "save_draft 超时但已写入"]].map(function (o) { return el("option", { value: o[0], text: o[1] }); })),
-      repeat: el("select", { id: "f-repeat" }, [["1", "1 次"], ["2", "连续 2 次（验证防重复）"]].map(function (o) { return el("option", { value: o[0], text: o[1] }); })),
+      repeat: el("input", { id: "f-repeat", type: "checkbox" }),
       steps: el("input", { id: "f-steps", type: "number", min: "1", max: "8", value: "8" }),
       code: el("input", { id: "f-code", type: "password", autocomplete: "off" })
     };
     var datalist = el("datalist", { id: "asset-ids" }, ["M01", "M02", "M03", "M04", "M05", "M06", "M07"].map(function (a) { return el("option", { value: a }); }));
-    function fill(id) {
+    var current = DATA.cases[0] ? DATA.cases[0].case : null;
+
+    // 场景卡片
+    var picker = el("div", { class: "scenario-grid", role: "radiogroup", "aria-label": "选择场景" });
+    DATA.cases.forEach(function (c) {
+      var t = splitTitle(c);
+      var card = el("button", { type: "button", class: "scenario", role: "radio", "aria-checked": "false", "data-case": c.case, onclick: function () { choose(c.case); } },
+        el("span", { class: "case-no", text: caseNo(c) }),
+        el("span", { class: "scenario-text" }, el("span", { class: "scenario-name", text: t[0] }), el("span", { class: "scenario-desc", text: t[1] })));
+      picker.appendChild(card);
+    });
+
+    var summary = el("div", { class: "request-summary" });
+    var knobs = el("div", { class: "tags knob-tags" });
+    function field(label, input, hint) {
+      return el("label", { class: "field" }, el("span", { text: label }), input, hint ? el("span", { class: "field-hint", text: hint }) : null);
+    }
+    function check(label, input, hint) {
+      return el("label", { class: "field field-check" }, input, el("span", null, el("span", { class: "check-label", text: label }), hint ? el("span", { class: "field-hint", text: hint }) : null));
+    }
+    var editBox = el("details", { class: "fold" },
+      el("summary", null, icon("edit"), "修改申请单"),
+      el("div", { class: "fold-grid" }, field("素材 ID", f.asset), datalist, field("渠道", f.channel), field("日期", f.date), field("时段", f.time),
+        check("日期不能改", f.fixed, "勾选后 Agent 不会擅自改到其他日期"), field("备注（可选）", f.note)));
+    var advBox = el("details", { class: "fold" },
+      el("summary", null, icon("list"), "高级：测试开关（选场景时已自动设置）"),
+      el("div", { class: "fold-grid" },
+        field("故障注入", f.fault, "模拟保存草稿时的存储故障"),
+        check("连续提交两次", f.repeat, "同一申请提交两次，验证只产生一份草稿"),
+        field("步数上限", f.steps, "模型最多走几步，默认 8；设成 3 可看到触顶")));
+
+    function refresh() {
+      var parts = [
+        ["file", f.asset.value || "—"],
+        ["channel", CHANNEL[f.channel.value] || f.channel.value],
+        ["calendar", (f.date.value || "—") + " " + f.time.value]
+      ];
+      if (f.fixed.checked) parts.push(["lock", "日期不能改"]);
+      summary.replaceChildren.apply(summary, parts.map(function (p) { return el("span", { class: "summary-chip" }, icon(p[0]), p[1]); }));
+      var tags = [];
+      if (f.fault.value) tags.push(el("span", { class: "tag tag-fault" }, icon("alert"), "故障注入：" + f.fault.options[f.fault.selectedIndex].text));
+      if (f.repeat.checked) tags.push(el("span", { class: "tag tag-brand" }, icon("repeat"), "连续提交两次"));
+      if (Number(f.steps.value) !== 8) tags.push(el("span", { class: "tag" }, icon("list"), "步数上限 " + f.steps.value));
+      knobs.replaceChildren.apply(knobs, tags);
+      knobs.hidden = !tags.length;
+    }
+    function choose(id) {
       var c = findCase(id);
       if (!c) return;
+      current = id;
       var r = c.request;
       f.asset.value = r.asset_id; f.channel.value = r.channel;
       f.date.value = r.publish_at.slice(0, 10); f.time.value = r.publish_at.slice(11, 16);
       f.fixed.checked = !!(r.constraints && r.constraints.date_fixed); f.note.value = r.note || "";
       f.fault.value = (c.fault_injection && c.fault_injection.save_draft) || "";
-      f.repeat.value = String((c.options && c.options.repeat) || 1);
+      f.repeat.checked = ((c.options && c.options.repeat) || 1) > 1;
       f.steps.value = String((c.options && c.options.max_steps) || 8);
+      Array.prototype.forEach.call(picker.children, function (b) { b.setAttribute("aria-checked", b.getAttribute("data-case") === id ? "true" : "false"); });
+      refresh();
     }
-    presetSel.addEventListener("change", function () { fill(presetSel.value); });
-    fill(presetSel.value);
+    [f.asset, f.channel, f.date, f.time, f.fixed, f.fault, f.repeat, f.steps].forEach(function (input) {
+      input.addEventListener("input", refresh);
+      input.addEventListener("change", refresh);
+    });
+
     var status = el("p", { class: "live-status", role: "status" });
     var result = el("div", { class: "live-result" });
-    var button = el("button", { type: "submit", class: "btn" }, icon("bolt"), "用真实模型运行");
-    function field(label, input) { return el("label", { class: "field" }, el("span", { text: label }), input); }
+    var button = el("button", { type: "submit", class: "btn btn-lg" }, icon("bolt"), "用真实模型运行");
     var form = el("form", { class: "card live-form", onsubmit: function (ev) { ev.preventDefault(); submit(); } },
-      el("h3", { class: "card-title" }, icon("edit"), "排期申请单"),
-      field("预设用例", presetSel), field("素材 ID", f.asset), datalist, field("渠道", f.channel),
-      field("日期", f.date), field("时段", f.time), field("日期不能改", f.fixed), field("备注", f.note),
-      field("故障注入", f.fault), field("提交次数", f.repeat), field("步数上限", f.steps),
+      el("h3", { class: "card-title" }, icon("play"), "第一步：选一个场景"),
+      picker,
+      el("h3", { class: "card-title step-two" }, icon("file"), "第二步：确认申请单，然后运行"),
+      summary, knobs, editBox, advBox,
       health.access_code_required ? field("访问口令", f.code) : null,
       el("div", { class: "form-actions" }, button, status)
     );
+    choose(current);
+
     function submit() {
       var payload = {
-        case_id: presetSel.value,
+        case_id: current,
         request: {
           asset_id: f.asset.value.trim(), channel: f.channel.value, publish_at: f.date.value + " " + f.time.value,
           note: f.note.value, constraints: { date_fixed: f.fixed.checked }
         },
         fault_injection: f.fault.value ? { save_draft: f.fault.value } : {},
-        repeat: Number(f.repeat.value), max_steps: Number(f.steps.value)
+        repeat: f.repeat.checked ? 2 : 1, max_steps: Number(f.steps.value) || 8
       };
       if (health.access_code_required) payload.access_code = f.code.value;
       button.disabled = true;
       var started = Date.now();
-      var spinner = el("span", { class: "spinner", "aria-hidden": "true" });
       var label = el("span", { text: "运行中…" });
-      status.replaceChildren(spinner, label);
+      status.replaceChildren(el("span", { class: "spinner", "aria-hidden": "true" }), label);
       var tick = setInterval(function () { label.textContent = "运行中，已等待 " + Math.round((Date.now() - started) / 1000) + " 秒（真实模型通常 5~25 秒）"; }, 500);
       result.replaceChildren();
       fetch("/api/run", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) })
@@ -476,18 +528,20 @@
         .then(function (r) {
           if (r.body.ok) {
             status.replaceChildren(icon("check"), "完成，用时 " + r.body.elapsed_s + " 秒；今天已用 " + r.body.quota.used_today + " / " + r.body.quota.daily_limit + " 次。");
-            var entry = { case: r.body.case.case, title: "实时运行结果：" + r.body.case.request.asset_id + " · " + (CHANNEL[r.body.case.request.channel] || r.body.case.request.channel) + " · " + r.body.case.request.publish_at, covers: [], request: r.body.case.request, fault_injection: r.body.case.fault_injection, options: r.body.case.options, output: r.body.output, trace: r.body.trace };
+            var req = r.body.case.request;
+            var entry = { case: r.body.case.case, title: "实时运行结果：" + req.asset_id + " · " + (CHANNEL[req.channel] || req.channel) + " · " + req.publish_at, covers: [], request: req, fault_injection: r.body.case.fault_injection, options: r.body.case.options, output: r.body.output, trace: r.body.trace };
             result.appendChild(renderEntry(entry, { animate: true }));
+            result.scrollIntoView({ behavior: "smooth", block: "start" });
           } else {
             var err = r.body.error || {};
             status.replaceChildren(icon("alert"), err.message || ("请求失败（HTTP " + r.status + "）"));
             if (err.fallback === "replay") {
-              result.appendChild(el("p", { class: "card" }, "可以先看这个用例的真实录制：",
-                el("button", { type: "button", class: "btn btn-ghost", onclick: function () { selectCase(presetSel.value); } }, icon("play"), "查看回放")));
+              result.appendChild(el("p", { class: "card" }, "可以先看这个场景的真实录制：",
+                el("button", { type: "button", class: "btn btn-ghost", onclick: function () { selectCase(current); } }, icon("play"), "查看回放")));
             }
           }
         })
-        .catch(function () { status.replaceChildren(icon("alert"), "网络错误，已切换到回放。"); selectCase(presetSel.value); })
+        .catch(function () { status.replaceChildren(icon("alert"), "网络错误，已切换到回放。"); selectCase(current); })
         .then(function () { clearInterval(tick); button.disabled = false; });
     }
     view.append(intro, form, result);
