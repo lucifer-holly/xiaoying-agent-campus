@@ -96,7 +96,7 @@ done; exit 1')" || die "服务器没有 Python 3.10+（含 venv / ensurepip 模�
   Debian 12：apt install -y python3-venv
 装好后重新运行本脚本。"
 echo "  Python：$PY（$(remote "$PY -V" 2>&1)）"
-remote "test -f $REMOTE/.env" || die "缺少 $REMOTE/.env：按 DEPLOY_HANDOFF.md 用 deploy/server.env.example 创建（部署脚本不会替你创建或覆盖它）"
+remote "test -f $REMOTE/.env" || die "缺少 $REMOTE/.env：用 deploy/server.env.example 创建（部署脚本不会替你创建或覆盖它）"
 remote "grep -qE '^LLM_API_KEY=.+' $REMOTE/.env" || warn ".env 里 LLM_API_KEY 为空：页面只有回放，没有实时运行"
 remote "grep -qE '^DEMO_ACCESS_CODE=.+' $REMOTE/.env" && echo "  实时运行需要访问口令（DEMO_ACCESS_CODE 已设置）" || echo "  实时运行无需口令（按 IP 限流、每日上限与并发上限保护）"
 [ "$PORT" != "3000" ] || die "端口 3000 是 booksprite 在用的，请在 $REMOTE/.env 里改 PORT"

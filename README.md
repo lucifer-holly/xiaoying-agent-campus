@@ -200,10 +200,8 @@ xiaoying-agent-campus/
 ├── scripts/        # 批量录制、稳定性评估、生成回放数据、部署
 ├── demo/           # 回放页（静态）
 ├── deploy/         # Caddy 站点片段、systemd unit、服务器 .env 模板
-└── docs/           # 01 需求、02 方案、03 评估、04 AI 使用、05 复盘；附录：PLAN.md（前期规划）、DEPLOY_HANDOFF.md（演示部署与运维）
+└── docs/           # 01 需求、02 方案、03 评估、04 AI 使用、05 复盘
 ```
-
-`docs/PLAN.md` 是前期规划记录（四道题的拆解、选题对比、骨架设计），最终实现以 docs/01–05 为准；`docs/DEPLOY_HANDOFF.md` 是演示站点的部署记录、运维、回滚和健康检查。
 
 ## 安全说明
 
