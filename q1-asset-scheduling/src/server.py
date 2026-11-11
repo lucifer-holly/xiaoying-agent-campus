@@ -198,7 +198,7 @@ def build_live_case(body: dict, presets: dict[str, dict]) -> dict:
     if raw is not None:
         if not isinstance(raw, dict):
             raise ApiError(400, "BAD_REQUEST", "request 必须是对象")
-        for key in ("asset_id", "channel", "publish_at", "requester", "note"):
+        for key in ("asset_id", "channel", "publish_at", "requester", "note", "instructions"):
             if key in raw:
                 req[key] = raw[key]
         if "constraints" in raw:
@@ -210,7 +210,7 @@ def build_live_case(body: dict, presets: dict[str, dict]) -> dict:
         problems.append(f"channel 只能是 {', '.join(CHANNELS)}")
     if not isinstance(req.get("publish_at"), str) or not _PUBLISH_AT.match(req["publish_at"]):
         problems.append("publish_at 格式应为 YYYY-MM-DD HH:MM")
-    for key, limit in (("note", 200), ("requester", 40)):
+    for key, limit in (("note", 200), ("requester", 40), ("instructions", 300)):
         if key in req and (not isinstance(req[key], str) or len(req[key]) > limit):
             problems.append(f"{key} 必须是不超过 {limit} 字的字符串")
     faults = body.get("fault_injection", base.get("fault_injection") if base else {}) or {}

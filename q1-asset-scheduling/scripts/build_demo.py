@@ -18,7 +18,7 @@ EXAMPLES = ROOT / "examples"
 OUT = ROOT / "demo" / "data" / "replay.js"
 # 迭代记录在回放页上的说明（这些结论来自 docs/03 第 5 节的分析，不是脚本推断出来的）
 ITERATION_NOTES = {
-    "02-slot-conflict.q1-v1": "迭代前（提示词 q1-v1）：时段冲突时找到 19:00 却没有先保存待确认草稿",
+    "02-slot-conflict.q1-v1": "提示词迭代前：时段冲突时找到 19:00 却没有先保存待确认草稿",
 }
 
 
@@ -53,7 +53,7 @@ def main() -> int:
         iterations.append({
             "case": trace_path.name.replace(".trace.json", ""),
             "title": ITERATION_NOTES.get(trace_path.name.replace(".trace.json", ""),
-                                         f"{trace['case_id']}（提示词 {trace['prompt_version']}，迭代前的原始记录）"),
+                                         f"{trace['case_id']}：提示词迭代前的原始记录"),
             "request": trace["request"],
             "fault_injection": trace.get("fault_injection") or {},
             "output": load(out_path) if out_path.exists() else trace["final"],

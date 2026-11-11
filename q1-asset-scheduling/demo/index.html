@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>素材排期 Agent · 运行回放</title>
-  <meta name="description" content="素材审核与发布排期 Agent：真实模型运行回放与实时演示">
+  <meta name="description" content="素材审核与发布排期 Agent：真实模型运行的节点图回放，以及现场新建任务">
   <meta name="theme-color" content="#ff8a6a">
   <link rel="icon" href="data:,">
   <link rel="stylesheet" href="style.css">
@@ -26,11 +26,12 @@
       <ul class="usp" id="usp" aria-label="核心卖点"></ul>
       <p class="hero-label">技术路线</p>
       <ul class="stats" id="stats" aria-label="技术路线"></ul>
-      <div class="tabs" role="tablist" aria-label="视图">
-        <button type="button" role="tab" data-view="replay" aria-selected="true">运行回放</button>
-        <button type="button" role="tab" data-view="compare" aria-selected="false">模型如何应变</button>
-        <button type="button" role="tab" data-view="live" aria-selected="false" id="tab-live" hidden>实时运行</button>
-        <button type="button" role="tab" data-view="data" aria-selected="false">数据接入</button>
+      <div class="hero-actions">
+        <div class="tabs" role="tablist" aria-label="视图">
+          <button type="button" role="tab" data-view="replay" aria-selected="true">运行回放</button>
+          <button type="button" role="tab" data-view="data" aria-selected="false">数据接入</button>
+        </div>
+        <button type="button" class="task-cta" data-view="task" id="tab-task" hidden>新建任务</button>
       </div>
     </div>
   </header>
@@ -42,9 +43,8 @@
       <aside class="case-list" id="case-list" aria-label="用例列表"></aside>
       <article class="detail" id="case-detail" aria-live="polite"></article>
     </section>
-    <section id="view-compare" class="view" hidden></section>
-    <section id="view-live" class="view" hidden></section>
     <section id="view-data" class="view" hidden></section>
+    <section id="view-task" class="view view-task" aria-label="新建任务" hidden></section>
   </main>
 
   <footer class="footer">

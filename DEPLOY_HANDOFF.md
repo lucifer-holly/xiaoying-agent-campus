@@ -15,13 +15,13 @@
 
 | 项 | 值 |
 |---|---|
-| 地址 | <https://xiaoying.gret.me/>（回放 + 实时运行）；静态回放 <https://lucifer-holly.github.io/xiaoying-agent-campus/demo/>（GitHub Pages，`submission` 分支根目录，分支更新后自动重建） |
+| 地址 | <https://xiaoying.gret.me/>（回放 + 新建任务）；静态回放 <https://lucifer-holly.github.io/xiaoying-agent-campus/demo/>（GitHub Pages，`submission` 分支根目录，分支更新后自动重建） |
 | DNS / 证书 | A 记录 → 47.99.125.122；Let's Encrypt 证书由 Caddy 自动签发和续期（首张有效期至 2027-02-08） |
 | 服务器 | SSH 别名 `aliyun`（root）；Ubuntu 24.04.4，Caddy 2.11.4，Python 3.12.3（已装 `python3.12-venv`），systemd 255，cgroup v2；内存约 1.6G |
 | 服务 | `xiaoying-agent.service`：User=caddy，只监听 `127.0.0.1:8710`；`ProtectSystem=strict`，只有 `state/` 可写；`/srv/shuling`、`/var/lib/caddy`、`/etc/caddy` 对它不可见；`MemoryMax=300M`（实际约 40M）；`systemd-analyze security` 评分 4.6 |
 | 目录 | `/srv/xiaoying-agent/`：`app/`（代码，root 所有、对服务只读）、`app.prev/`（上一版，用于回滚）、`venv/`、`state/`（caddy 可写，只有每日计数 `quota.json`）、`.env`（root 600） |
 | Caddy | 在 `/etc/caddy/Caddyfile` 末尾追加了 `q1-asset-scheduling/deploy/Caddyfile.xiaoying` 的站点块，没有改动已有内容。修改前的备份：`/etc/caddy/Caddyfile.bak-20261110-223022` |
-| 防护 | 无需口令，打开即可实时运行；每个 IP 5 次/600 秒；每天 50 次（落盘，跨重启累计）；并发 2。超限时页面自动切到回放 |
+| 防护 | 无需口令，打开即可新建任务（真实模型现场运行）；每个 IP 5 次/600 秒；每天 50 次（落盘，跨重启累计）；并发 2。超限时页面自动切到回放 |
 | 版本 | `/api/health` 的 `version` 字段是部署时 main 分支的提交短 SHA |
 
 **已验证**（都在服务器上经公网 DNS 完成）：
@@ -64,8 +64,8 @@ scripts/server-logs.sh caddy 80
 - 从任意网络：`curl -s https://xiaoying.gret.me/api/health`，应看到 `"ok": true, "live_enabled": true`。
 - **注意**：本机（这台 Mac）当前的网络代理访问这台服务器的 HTTPS 会报 TLS 连接错误，访问 `gamesci.gret.me` 也一样，不是服务的问题。要验证，请在服务器上用 `curl --resolve xiaoying.gret.me:443:127.0.0.1 https://xiaoying.gret.me/api/health`，或用手机、其他网络打开。
 - 502：应用没起来，看 `scripts/server-logs.sh app`，以及 `ssh aliyun systemctl status xiaoying-agent`。
-- 页面只有回放、没有“实时运行”：`/api/health` 的 `live_enabled` 为 false，说明 `.env` 里缺 `LLM_API_KEY` 或 `DEMO_ACCESS_CODE`。
-- 实时运行提示次数用完：`quota.used_today` 达到 `DEMO_DAILY_LIMIT`，次日自动清零；临时调整就改 `.env` 再重启。
+- 页面只有回放、没有“新建任务”：`/api/health` 的 `live_enabled` 为 false，说明 `.env` 里缺 `LLM_API_KEY` 或 `DEMO_ACCESS_CODE`。
+- 新建任务提示次数用完：`quota.used_today` 达到 `DEMO_DAILY_LIMIT`，次日自动清零；临时调整就改 `.env` 再重启。
 - 证书问题：`ssh aliyun "journalctl -u caddy --no-pager | grep xiaoying | tail"`。
 
 ## 5. 从零重建（服务器重装时）

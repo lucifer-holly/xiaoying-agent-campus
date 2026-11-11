@@ -89,3 +89,10 @@ def test_http_routes(app):
     finally:
         httpd.shutdown()
         httpd.server_close()
+
+
+def test_live_request_accepts_short_instructions_only(app):
+    case = server.build_live_case({"case_id": "01-normal-free-slot", "request": {"instructions": "优先排到 20:00 以后"}}, app.presets)
+    assert case["request"]["instructions"] == "优先排到 20:00 以后"
+    too_long = {"case_id": "01-normal-free-slot", "request": {"instructions": "长" * 301}}
+    assert error_code(server.build_live_case, too_long, app.presets)[0] == "BAD_REQUEST"
