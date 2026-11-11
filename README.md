@@ -8,9 +8,6 @@
 | 题号 | 题目 | 目录 | 状态 |
 |---|---|---|---|
 | 1 | 素材审核与发布排期 Agent | [`q1-asset-scheduling/`](q1-asset-scheduling/) | **已完成，正式提交** |
-| 2 | 内容任务规划 Agent | `q2-campaign-planning/` | 不做（规则只要求一道） |
-| 3 | 企业知识问答 Agent | `q3-knowledge-qa/` | 不做 |
-| 4 | 短视频脚本 Agent | `q4-video-script/` | 不做 |
 
 ## Q1 正式提交
 
