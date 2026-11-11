@@ -93,7 +93,7 @@ ssh aliyun "rm -rf /srv/xiaoying-agent"
 ## 7. 提交 SHA
 
 - 正式提交用 `submission` 分支，它由 `git subtree split --prefix=q1-asset-scheduling` 导出，分支根目录就是项目。
-- 当前最终 SHA：`97be001827baa0087330dc61a9a9ec00a4f59018`。
+- 当前最终 SHA：`c6033c1804b0aa78cb2bff0c767d4718a92f9cdb`。
 - 之后如果又改了 `q1-asset-scheduling/`（例如在 docs/04 补“本人修改记录”），在 main 上提交后重新导出：
 
 ```bash
