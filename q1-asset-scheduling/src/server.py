@@ -188,12 +188,27 @@ _PUBLISH_AT = re.compile(r"^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}$")
 _ASSET_ID = re.compile(r"^[A-Za-z0-9-]{1,12}$")
 
 
+def _text_ok(value) -> bool:
+    """是字符串，并且能编码成 UTF-8（JSON 里单独出现的代理项，例如 \\ud800，会被拒绝）。"""
+    if not isinstance(value, str):
+        return False
+    try:
+        value.encode("utf-8")
+    except UnicodeEncodeError:
+        return False
+    return True
+
+
 def build_live_case(body: dict, presets: dict[str, dict]) -> dict:
+    """把请求体变成一次运行的用例。所有形状和取值问题都在这里拒绝（400），不会先扣额度再在运行中途出错。"""
     if not isinstance(body, dict):
         raise ApiError(400, "BAD_REQUEST", "请求体必须是 JSON 对象")
-    base = presets.get(body.get("case_id") or "")
-    if body.get("case_id") and base is None:
-        raise ApiError(400, "BAD_REQUEST", f"没有这个用例：{body.get('case_id')}")
+    case_id = body.get("case_id")
+    if case_id is not None and not _text_ok(case_id):
+        raise ApiError(400, "BAD_REQUEST", "case_id 必须是字符串")
+    base = presets.get(case_id or "")
+    if case_id and base is None:
+        raise ApiError(400, "BAD_REQUEST", f"没有这个用例：{case_id}")
     raw = body.get("request")
     if raw is None and base is None:
         raise ApiError(400, "BAD_REQUEST", "需要 case_id 或 request")
@@ -205,7 +220,13 @@ def build_live_case(body: dict, presets: dict[str, dict]) -> dict:
             if key in raw:
                 req[key] = raw[key]
         if "constraints" in raw:
-            req["constraints"] = {"date_fixed": bool((raw.get("constraints") or {}).get("date_fixed"))}
+            constraints = raw.get("constraints") or {}
+            if not isinstance(constraints, dict):
+                raise ApiError(400, "BAD_REQUEST", "constraints 必须是对象")
+            req["constraints"] = {"date_fixed": bool(constraints.get("date_fixed"))}
+    bad_text = [k for k in ("asset_id", "channel", "publish_at", "requester", "note", "instructions") if k in req and not _text_ok(req[k])]
+    if bad_text:
+        raise ApiError(400, "BAD_REQUEST", f"{'、'.join(bad_text)} 必须是能正常编码的字符串")
     problems = []
     if not isinstance(req.get("asset_id"), str) or not _ASSET_ID.match(req["asset_id"]):
         problems.append("asset_id 格式不对")
@@ -222,13 +243,15 @@ def build_live_case(body: dict, presets: dict[str, dict]) -> dict:
         if key in req and (not isinstance(req[key], str) or len(req[key]) > limit):
             problems.append(f"{key} 必须是不超过 {limit} 字的字符串")
     faults = body.get("fault_injection", base.get("fault_injection") if base else {}) or {}
-    if not isinstance(faults, dict) or any(k not in TOOLS or v not in MODES for k, v in faults.items()):
-        problems.append("fault_injection 只能使用已定义的工具和模式")
+    if not isinstance(faults, dict) or not all(
+            isinstance(k, str) and isinstance(v, str) and k in TOOLS and v in MODES and (v != "timeout_after_commit" or k == "save_draft")
+            for k, v in faults.items()):
+        problems.append("fault_injection 只能使用已定义的工具和模式（timeout_after_commit 只适用于 save_draft）")
     repeat = body.get("repeat", (base or {}).get("options", {}).get("repeat", 1))
     max_steps = body.get("max_steps", (base or {}).get("options", {}).get("max_steps", 8))
-    if repeat not in (1, 2):
+    if type(repeat) is not int or repeat not in (1, 2):  # 用 type 而不是 isinstance：True、2.0 都不算
         problems.append("repeat 只能是 1 或 2")
-    if not isinstance(max_steps, int) or not 1 <= max_steps <= 8:
+    if type(max_steps) is not int or not 1 <= max_steps <= 8:
         problems.append("max_steps 取值 1~8")
     if problems:
         raise ApiError(400, "BAD_REQUEST", "；".join(problems))
@@ -324,7 +347,7 @@ def make_handler(app: App):
                 self.wfile.write(body)
 
         def _json(self, status: int, payload: dict, extra: dict | None = None) -> None:
-            body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+            body = json.dumps(payload, ensure_ascii=False).encode("utf-8", "replace")  # 万一模型返回了无法编码的字符，也不至于整个请求 500
             self._send(status, body, "application/json; charset=utf-8", {"Cache-Control": "no-store", **(extra or {})})
 
         def _static(self, path: str) -> None:

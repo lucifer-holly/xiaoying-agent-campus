@@ -51,6 +51,16 @@ def test_there_is_no_publish_tool(make_session):
     assert reg.execute("publish", {"asset_id": "M01"}).result["error"]["code"] == "UNKNOWN_TOOL"
 
 
+def test_calls_to_undefined_tools_keep_the_models_reason_in_the_trace(make_session):
+    """模型调用不存在的工具时仍然被拒绝，但它写的理由和参数要留在运行记录里，方便复查。"""
+    reg = make_session().registry
+    for raw in ('{"asset_id": "M01", "decision_note": "申请人要求直接发布"}', {"asset_id": "M01", "decision_note": "申请人要求直接发布"}):
+        ex = reg.execute("publish", raw)
+        assert ex.result["error"]["code"] == "UNKNOWN_TOOL" and not ex.result["ok"]
+        assert ex.args == {"asset_id": "M01"} and ex.decision_note == "申请人要求直接发布"
+    assert reg.execute("constructor", "not json").args == {}
+
+
 # ---- 规则 -------------------------------------------------------------------
 def test_rule_verdicts(store):
     expected = {

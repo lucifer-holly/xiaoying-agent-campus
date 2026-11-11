@@ -121,7 +121,14 @@ class ToolRegistry:
         """解析并校验参数，返回 (参数, decision_note, 错误列表)。"""
         tool = self._tools.get(name)
         if tool is None:
-            return {}, None, [f"不存在工具 {name}（可用：{', '.join(self._tools)}）"]
+            # 照样拒绝，但把模型写的参数和理由留在运行记录里，方便复查它为什么想调这个工具
+            try:
+                parsed = json.loads(raw_args or "{}") if isinstance(raw_args, str) else dict(raw_args or {})
+            except (TypeError, ValueError):
+                parsed = {}
+            args = parsed if isinstance(parsed, dict) else {}
+            note = args.pop("decision_note", None)
+            return args, note, [f"不存在工具 {name}（可用：{', '.join(self._tools)}）"]
         if isinstance(raw_args, str):
             try:
                 args = json.loads(raw_args or "{}")

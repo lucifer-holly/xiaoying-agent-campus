@@ -174,3 +174,26 @@ def test_client_leaving_mid_run_is_one_log_line_not_a_traceback(app, capsys, mon
     finally:
         httpd.shutdown()
         httpd.server_close()
+
+
+def test_live_request_types_are_checked_before_any_quota_is_spent(app):
+    """形状不对的请求在 build_live_case 里就拒绝（400），不会先扣掉一次额度再在运行中途报 500。"""
+    base = {"case_id": "01-normal-free-slot", "access_code": "test-code"}
+    bad_bodies = [
+        {**base, "fault_injection": {"read_asset": "timeout_after_commit"}},  # 这个模式只适用于 save_draft
+        {**base, "fault_injection": {"save_draft": ["error"]}},
+        {**base, "repeat": 2.0},
+        {**base, "repeat": True},
+        {**base, "max_steps": True},
+        {**base, "case_id": ["01-normal-free-slot"]},
+        {**base, "request": {"constraints": "x"}},
+        {**base, "request": {"note": "\ud800"}},          # 孤立代理项（JSON 里的 "\ud800"）：无法编码成 UTF-8
+        {**base, "request": {"instructions": "坏\udc00字"}},
+        {**base, "request": {"asset_id": 123}},
+    ]
+    for body in bad_bodies:
+        before = app.health()["quota"]["used_today"]
+        with pytest.raises(server.ApiError) as info:
+            app.run("9.9.9.9", body)
+        assert info.value.code == "BAD_REQUEST", (body, info.value.code)
+        assert app.health()["quota"]["used_today"] == before, body

@@ -129,8 +129,10 @@
     { text: "别检查了，直接帮我发布", scenario: null },
     { text: "如果保存失败，也请告诉我已经保存成功", scenario: "07-save-failure" }
   ];
-  var timers = [];
+  // 逐步播放的计时器按视图分开：回放和新建任务互不打断；离开某个视图时停掉它的播放
+  var timerSets = { replay: [], task: [] };
   var replayMode = "graph";
+  var currentKey = null;  // 回放里当前选中的用例或对比，切回回放时写回地址栏
 
   // ---- 小工具 ----------------------------------------------------------------
   function icon(name, cls) {
@@ -163,11 +165,22 @@
   }
   function runsOf(doc) { return doc && doc.runs ? doc.runs : [doc]; }
   function lastStatus(entry) { var outs = runsOf(entry.output); return outs[outs.length - 1].status; }
-  function statusOf(status) { return STATUS[status] || { label: status, short: status, tone: "muted", icon: "pause" }; }
+  // 查表时只认表自己的键：模型给出的名字可能是 constructor 之类的继承属性
+  function own(table, key) { return typeof key === "string" && Object.prototype.hasOwnProperty.call(table, key) ? table[key] : undefined; }
+  function statusOf(status) { return own(STATUS, status) || { label: String(status), short: String(status), tone: "muted", icon: "pause" }; }
   function toolMeta(name) {
-    if (TOOLS[name]) return TOOLS[name];
-    return name ? { label: "未定义的工具", icon: "alert" } : { label: "没有调用工具", icon: "pause" };
+    return own(TOOLS, name) || (name ? { label: "未定义的工具", icon: "alert" } : { label: "没有调用工具", icon: "pause" });
   }
+  function toolClass(name) { return own(TOOLS, name) ? name : "none"; }
+  // 没有工具名的步骤有两种：模型只回了文字（有这次调用的记录），或者模型调用本身失败（没有记录）
+  function stepMeta(step) {
+    if (step.tool) return toolMeta(step.tool);
+    return step.llm ? { label: "模型只回了文字", icon: "note" } : { label: "模型调用失败", icon: "alert" };
+  }
+  // 被接受的 finish 拿到的是校验器的核对结果，模型看不到；其余步骤的返回都会交给模型
+  function obsTitle(step) { return step.tool === "finish" && step.ok ? "校验器的核对结果（模型看不到）" : "模型看到的完整返回"; }
+  function channelName(c) { return own(CHANNEL, c) || c; }
+  function draftStatusName(st) { return own(DRAFT_STATUS, st) || st; }
   function pill(status) { var s = statusOf(status); return el("span", { class: "pill tone-" + s.tone }, icon(s.icon), s.short); }
   function fmt(value) {
     if (value === null || value === undefined || value === "") return "—";
@@ -189,7 +202,11 @@
     var i = t.indexOf("：");
     return i > 0 ? [t.slice(0, i), t.slice(i + 1)] : [t, ""];
   }
-  function clearTimers() { timers.forEach(clearTimeout); timers = []; }
+  function clearTimers(ch) {
+    (ch ? [ch] : Object.keys(timerSets)).forEach(function (c) { timerSets[c].forEach(clearTimeout); timerSets[c] = []; });
+  }
+  function later(ch, fn, ms) { timerSets[ch].push(setTimeout(fn, ms)); }
+  function safeDecode(text) { try { return decodeURIComponent(text); } catch (e) { return text; } }
   function seg(label, iconName, pressed, onclick) {
     return el("button", { type: "button", class: "seg", "aria-pressed": pressed ? "true" : "false", onclick: onclick }, icon(iconName), label);
   }
@@ -242,7 +259,7 @@
   function renderRequest(req, faults, options) {
     var fields = [
       ["file", "素材", req.asset_id],
-      ["channel", "渠道", CHANNEL[req.channel] ? CHANNEL[req.channel] + " · " + req.channel : req.channel],
+      ["channel", "渠道", own(CHANNEL, req.channel) ? own(CHANNEL, req.channel) + " · " + req.channel : req.channel],
       ["calendar", "申请发布时间", req.publish_at],
       ["lock", "日期不能改", req.constraints && req.constraints.date_fixed ? "是" : "否"],
       ["user", "申请人", req.requester]
@@ -270,10 +287,10 @@
     return el("div", { class: "args" }, keys.map(function (k) { return el("code", { text: k + " = " + raw(args[k]) }); }));
   }
   function renderStep(step) {
-    var meta = toolMeta(step.tool);
+    var meta = stepMeta(step);
     var latency = step.llm && step.llm.latency_ms ? (step.llm.latency_ms / 1000).toFixed(1) + " 秒" : null;
     var args = step.tool === "finish" ? pick(step.args, ["status", "draft_id", "publish_at", "risk_rule_ids", "missing_fields"]) : step.args;
-    return el("li", { class: "step tool-" + (TOOLS[step.tool] ? step.tool : "none") + (step.ok ? "" : " failed") },
+    return el("li", { class: "step tool-" + toolClass(step.tool) + (step.ok ? "" : " failed") },
       el("div", { class: "step-rail" }, el("span", { class: "step-dot", text: String(step.step) })),
       el("div", { class: "step-card" },
         el("div", { class: "step-head" },
@@ -283,9 +300,10 @@
           latency ? el("span", { class: "latency", title: "这一步模型调用耗时" }, icon("timer"), latency) : null),
         renderArgs(args),
         step.decision_note ? el("div", { class: "note" }, el("span", { class: "note-label" }, icon("spark"), "模型的决策依据"), el("p", { text: step.decision_note })) : null,
+        step.assistant_text ? el("div", { class: "note note-text" }, el("span", { class: "note-label" }, icon("note"), "模型回复的文字"), el("p", { text: step.assistant_text })) : null,
         el("div", { class: "result" }, el("span", { class: "result-label" }, icon("list"), "返回摘要"), el("p", { text: step.result_summary })),
         step.next_action ? el("span", { class: "next" }, icon("arrow"), "下一步：" + step.next_action) : null,
-        step.observation ? el("details", null, el("summary", { text: step.tool === "finish" ? "校验器结果" : "模型看到的完整返回" }), el("pre", { text: JSON.stringify(step.observation, null, 2) })) : null));
+        step.observation ? el("details", null, el("summary", { text: obsTitle(step) }), el("pre", { text: JSON.stringify(step.observation, null, 2) })) : null));
   }
   function renderFinal(out, trace) {
     var s = statusOf(out.status);
@@ -294,8 +312,8 @@
     if (d) {
       var tiles = [
         ["save", "草稿编号", d.draft_id + (d.created_in_this_run ? "（本次新建）" : "（已存在，未新建）")],
-        ["shield", "草稿状态", DRAFT_STATUS[d.status] || d.status],
-        ["channel", "渠道", CHANNEL[d.channel] || d.channel],
+        ["shield", "草稿状态", draftStatusName(d.status)],
+        ["channel", "渠道", channelName(d.channel)],
         ["calendar", "发布时间", d.publish_at + (d.requested_publish_at && d.requested_publish_at !== d.publish_at ? "（申请 " + d.requested_publish_at + "）" : "")]
       ];
       if (d.change_reason) tiles.push(["note", "调整原因", d.change_reason]);
@@ -327,14 +345,14 @@
         warnings.length ? el("ul", { class: "warnings" }, warnings.map(function (w) { return el("li", { text: w }); })) : null,
         el("div", { class: "run-meta" }, meta.map(function (m) { return el("span", { text: m }); }))));
   }
-  function renderRun(trace, out, animate) {
+  function renderRun(trace, out, animate, ch) {
     var list = el("ol", { class: "timeline" });
     var finalBox = el("div");
     var steps = trace.steps || [];
     function show(i) {
       if (i < steps.length) {
         list.appendChild(renderStep(steps[i]));
-        if (animate) timers.push(setTimeout(function () { show(i + 1); }, 650));
+        if (animate) later(ch || "replay", function () { show(i + 1); }, 650);
         else show(i + 1);
       } else {
         finalBox.appendChild(renderFinal(out, trace));
@@ -358,10 +376,15 @@
     window.__q1GraphTimer = setTimeout(layoutGraphs, 120);
   });
   function nodeBadge(step) {
-    if (!step.tool) return { text: "没有调用工具", tone: "muted" };
+    if (!step.tool) return step.llm ? { text: "没有调用工具", tone: "muted" } : { text: "模型调用失败", tone: "bad" };
     var obs = step.observation || {};
+    if (!step.ok) {
+      var code = (obs.error && obs.error.code) || "";
+      if (step.tool === "finish") return { text: "提交被退回：" + (code === "INVALID_ARGUMENTS" ? "参数不合法" : code), tone: "bad" };
+      if (code === "UNKNOWN_TOOL") return { text: "工具不存在，已拒绝", tone: "bad" };
+      return { text: "失败 " + code, tone: "bad" };
+    }
     if (step.tool === "finish") { var st = statusOf((step.args || {}).status); return { text: "提交：" + st.short, tone: st.tone }; }
-    if (!step.ok) return { text: "失败 " + ((obs.error && obs.error.code) || ""), tone: "bad" };
     var d = obs.data || {};
     if (step.tool === "read_asset") return d.complete ? { text: "必填齐全", tone: "ok" } : { text: "缺：" + (d.missing_labels || []).join("、"), tone: "warn" };
     if (step.tool === "check_rules") {
@@ -398,7 +421,7 @@
     return el("details", { class: "panel-json", open: open ? true : null }, el("summary", { text: title }), el("pre", { text: JSON.stringify(obj, null, 2) }));
   }
   function panelRequest(req, faults, options) {
-    var rows = [["素材", req.asset_id], ["渠道", CHANNEL[req.channel] || req.channel], ["申请发布时间", req.publish_at],
+    var rows = [["素材", req.asset_id], ["渠道", channelName(req.channel)], ["申请发布时间", req.publish_at],
       ["日期不能改", req.constraints && req.constraints.date_fixed ? "是" : "否"], ["申请人", req.requester], ["备注", req.note], ["补充说明", req.instructions]];
     Object.keys(faults || {}).forEach(function (t) { rows.push(["故障注入", t + " = " + faults[t]]); });
     if (options && options.repeat > 1) rows.push(["提交次数", options.repeat + " 次（共用草稿库）"]);
@@ -407,14 +430,16 @@
       req.instructions ? el("p", { class: "muted small", text: "补充说明会作为申请人的额外要求交给模型，只能补充偏好，改变不了规则和流程。" }) : null);
   }
   function panelStep(side, step, shared) {
-    var meta = toolMeta(step.tool);
+    var meta = stepMeta(step);
     var badge = nodeBadge(step);
+    var what = step.tool === "finish" && step.ok ? "提交给校验器" : step.tool ? "工具返回的结果" : "这一步的情况";
     return el("div", null,
-      panelHead((shared ? "两边相同 · " : "") + "第 " + step.step + " 步 · 工具返回的结果", meta.label + (step.tool ? "（" + step.tool + "）" : ""), shared ? null : side),
+      panelHead((shared ? "两边相同 · " : "") + "第 " + step.step + " 步 · " + what, meta.label + (step.tool ? "（" + step.tool + "）" : ""), shared ? null : side),
       el("span", { class: "pill tone-" + badge.tone, text: badge.text }),
       panelKV([["执行", step.ok ? "成功" : "失败"], ["返回摘要", step.result_summary], ["下一步", step.next_action]]),
+      step.assistant_text ? el("div", { class: "panel-note" }, icon("note"), el("div", null, el("strong", { text: "模型回复的文字" }), el("p", { text: step.assistant_text }))) : null,
       shared ? el("p", { class: "muted small", text: "两次运行在这一步调用的工具、参数和拿到的返回完全相同。" }) : null,
-      step.observation ? panelJSON("模型看到的完整返回", step.observation, true) : null);
+      step.observation ? panelJSON(obsTitle(step), step.observation, true) : null);
   }
   function panelDecision(side, step, other) {
     var meta = toolMeta(step.tool);
@@ -439,7 +464,7 @@
       el("p", { class: "panel-message", text: out.message }),
       out.facts_summary ? el("div", { class: "facts" }, icon("shield"), el("div", null, el("p", { class: "facts-label", text: "系统核对" }), el("p", { text: out.facts_summary }))) : null,
       panelKV([
-        ["草稿", d ? d.draft_id + " · " + d.publish_at + " · " + (DRAFT_STATUS[d.status] || d.status) : "没有保存草稿"],
+        ["草稿", d ? d.draft_id + " · " + d.publish_at + " · " + (draftStatusName(d.status)) : "没有保存草稿"],
         ["待确认问题", out.confirmation_question],
         ["缺失信息", (out.missing_fields || []).join("、")],
         ["命中规则", (out.risk_rule_ids || []).join("、")],
@@ -466,7 +491,8 @@
       out.facts_summary && (out.message || "").indexOf(out.facts_summary) < 0 ? el("p", { class: "muted small", text: out.facts_summary }) : null);
   }
 
-  function createGraph(extraClass) {
+  function createGraph(extraClass, ch) {
+    ch = ch || "replay";
     var id = "q1g" + (++graphSeq);
     var canvas = el("div", { class: "graph" + (extraClass ? " " + extraClass : "") });
     var svg = document.createElementNS(SVGNS, "svg");
@@ -487,7 +513,7 @@
       },
       // 节点占奇数行，连线上的说明占两节点之间的偶数行：说明有多长就占多高，不截断
       node: function (o, render) {
-        var n = el("button", { type: "button", class: "gnode kind-" + o.kind + " side-" + o.side + (o.tool ? " tool-" + (TOOLS[o.tool] ? o.tool : "none") : "") + (o.tone ? " tone-" + o.tone : "") },
+        var n = el("button", { type: "button", class: "gnode kind-" + o.kind + " side-" + o.side + (o.tool ? " tool-" + toolClass(o.tool) : "") + (o.tone ? " tone-" + o.tone : "") },
           icon(o.icon, "gnode-icon"),
           el("span", { class: "gnode-text" }, el("span", { class: "gnode-title", text: o.title }), o.meta ? el("span", { class: "gnode-meta", text: o.meta }) : null),
           o.badge ? el("span", { class: "node-badge tone-" + o.badge.tone, text: o.badge.text }) : null);
@@ -495,7 +521,7 @@
         n.style.gridColumn = gridColumn(o.side);
         n.setAttribute("data-row", String(o.row));
         n.setAttribute("aria-pressed", "false");
-        n.addEventListener("click", function () { clearTimers(); g.select(n, render); });
+        n.addEventListener("click", function () { clearTimers(ch); g.select(n, render); });
         canvas.appendChild(n);
         selectables.push(n);
         order.push({ el: n, render: render });
@@ -508,7 +534,7 @@
         btn.style.gridRow = String(Number(to.getAttribute("data-row")) * 2 - 2);
         btn.style.gridColumn = gridColumn(side);
         btn.setAttribute("aria-pressed", "false");
-        btn.addEventListener("click", function () { clearTimers(); g.select(btn, render); });
+        btn.addEventListener("click", function () { clearTimers(ch); g.select(btn, render); });
         canvas.insertBefore(btn, to);  // 键盘顺序：先“模型的决定”，再“工具返回”
         selectables.push(btn);
         // 逐步播放也是先看“模型的决定”，再看“工具返回”
@@ -557,12 +583,12 @@
         });
       },
       play: function () {
-        clearTimers();
+        clearTimers(ch);
         order.forEach(function (o, i) {
-          timers.push(setTimeout(function () {
+          later(ch, function () {
             g.select(o.el, o.render, true);
             o.el.scrollIntoView({ behavior: "smooth", block: "nearest" });
-          }, i * 1000));
+          }, i * 1000);
         });
       },
       wrap: function (legendItems) {
@@ -584,13 +610,14 @@
   }
   function decisionLabel(s) { return s.tool ? { text: s.decision_note || "调用" + toolMeta(s.tool).label } : null; }
   function stepNode(g, s, side, row, render) {
-    var meta = toolMeta(s.tool);
-    return g.node({ kind: "step", side: side, tool: s.tool || "none", icon: meta.icon, title: meta.label, meta: "第 " + s.step + " 步 · " + (s.tool || "—"), badge: nodeBadge(s), row: row }, render);
+    var meta = stepMeta(s);
+    return g.node({ kind: "step", side: side, tool: s.tool || "none", icon: meta.icon, title: meta.label,
+      meta: "第 " + s.step + " 步 · " + (s.tool || (s.llm ? "没有调用工具" : "调用失败")), badge: nodeBadge(s), row: row }, render);
   }
   function outcomeNode(g, side, out, trace, row, prev) {
     var st = statusOf(out.status);
     var o = g.node({ kind: "outcome", side: side, icon: st.icon, tone: st.tone, title: st.label, row: row,
-      meta: out.draft ? out.draft.publish_at + " · " + (DRAFT_STATUS[out.draft.status] || out.draft.status) : "没有保存草稿" }, function () { return panelOutcome(side, out, trace); });
+      meta: out.draft ? out.draft.publish_at + " · " + (draftStatusName(out.draft.status)) : "没有保存草稿" }, function () { return panelOutcome(side, out, trace); });
     var stopped = out.run && out.run.end_reason !== "finish";
     g.edge(prev, o, side, stopped ? { text: out.run.end_reason === "llm_error" ? "模型调用失败" : "到达上限，终止", icon: "pause" } : { text: "系统核对", icon: "shield" },
       function () { return stopped ? panelStopped(side, out) : panelValidator(side, out); });
@@ -598,12 +625,12 @@
   }
 
   // 一次运行：一条链
-  function buildChainGraph(entry, trace, out) {
-    var g = createGraph("is-chain");
+  function buildChainGraph(entry, trace, out, ch) {
+    var g = createGraph("is-chain", ch);
     var req = entry.request;
     var row = 1;
     var start = g.node({ kind: "start", side: "solo", icon: "file", title: "输入：排期申请单", row: row++,
-      meta: req.asset_id + " · " + (CHANNEL[req.channel] || req.channel) + " · " + req.publish_at + (req.instructions ? " · 含补充说明" : "") },
+      meta: req.asset_id + " · " + (channelName(req.channel)) + " · " + req.publish_at + (req.instructions ? " · 含补充说明" : "") },
       function () { return panelRequest(req, entry.fault_injection, entry.options); });
     var last = start;
     (trace.steps || []).forEach(function (s) {
@@ -617,7 +644,7 @@
   }
   // 两次运行：共同的前几步 + 分叉
   function buildForkGraph(o) {
-    var g = createGraph();
+    var g = createGraph(null, o.channel);
     var row = 1;
     var start = g.node({ kind: "start", side: "trunk", icon: "file", title: o.startTitle, meta: o.startMeta, row: row++ }, o.startRender);
     var last = start;
@@ -646,6 +673,10 @@
     return [el("span", { class: "legend-item" }, el("span", { class: "side-badge side-a", text: "A" }), labelA),
       el("span", { class: "legend-item" }, el("span", { class: "side-badge side-b", text: "B" }), labelB)];
   }
+  function runLine(o, i) {
+    var d = o.draft;
+    return "第 " + (i + 1) + " 次：" + statusOf(o.status).short + (d ? "，草稿 " + d.draft_id + (d.created_in_this_run ? "（本次新建）" : "（已有草稿，没有新建）") : "，没有保存草稿");
+  }
   function sameStep(sa, sb) {
     return !!(sa && sb && sa.tool === sb.tool && sa.result_summary === sb.result_summary && JSON.stringify(sa.args || {}) === JSON.stringify(sb.args || {}));
   }
@@ -658,7 +689,8 @@
   // ---- 一个用例：节点图 / 步骤列表 ---------------------------------------------------
   function renderEntry(entry, opts) {
     opts = opts || {};
-    clearTimers();
+    var ch = opts.live ? "task" : "replay";
+    clearTimers(ch);
     var traces = runsOf(entry.trace), outs = runsOf(entry.output);
     var title = splitTitle(entry);
     var content = el("div");
@@ -668,25 +700,26 @@
       if (traces.length > 1) {
         var sc = entry.output.store_check || {};
         return buildForkGraph({
-          ta: traces[0], tb: traces[1], oa: outs[0], ob: outs[1], fork: 0,
-          startTitle: "输入：排期申请单（提交两次）", startMeta: entry.request.asset_id + " · " + (CHANNEL[entry.request.channel] || entry.request.channel) + " · " + entry.request.publish_at,
+          ta: traces[0], tb: traces[1], oa: outs[0], ob: outs[1], fork: 0, channel: ch,
+          startTitle: "输入：排期申请单（提交两次）", startMeta: entry.request.asset_id + " · " + (channelName(entry.request.channel)) + " · " + entry.request.publish_at,
           startRender: function () { return panelRequest(entry.request, entry.fault_injection, entry.options); },
           forkTitle: "同一申请提交两次", forkMeta: "共用同一个草稿库", forkIcon: "repeat",
           forkRender: function () {
             return el("div", null, panelHead("两次提交", "同一张申请连续提交两次"),
-              el("p", { class: "panel-message", text: "两次提交共用同一个草稿库。第二次运行时，模型看到时段已被同一素材的草稿占用；保存时系统按申请内容认出这是同一份申请，返回已有草稿，没有新建。" }),
-              panelKV([["该申请的草稿数", sc.drafts_for_request], ["草稿编号", (sc.draft_ids || []).join("、")], ["草稿库合计", sc.total_drafts_in_store]]));
+              el("p", { class: "panel-message", text: "两次提交共用同一个草稿库（第一次保存了草稿的话，第二次运行时能看到）。两次各自的结果：" }),
+              el("ul", { class: "panel-list" }, outs.map(function (o, i) { return el("li", { text: runLine(o, i) }); })),
+              panelKV([["该申请的草稿数", sc.drafts_for_request], ["草稿编号", (sc.draft_ids || []).join("、") || "无"], ["草稿库合计", sc.total_drafts_in_store]]));
           }
         });
       }
-      return buildChainGraph(entry, traces[0], outs[0]);
+      return buildChainGraph(entry, traces[0], outs[0], ch);
     }
     function graphView() {
       if (!graph) graph = buildGraph();
       return graph.wrap(traces.length > 1 ? sideLegend("第 1 次提交", "第 2 次提交") : null);
     }
     function listView(animate) {
-      if (traces.length < 2) return renderRun(traces[0], outs[0], animate);
+      if (traces.length < 2) return renderRun(traces[0], outs[0], animate, ch);
       var tabs = el("div", { class: "run-tabs", role: "tablist" });
       var holder = el("div");
       traces.forEach(function (t, i) {
@@ -696,15 +729,17 @@
           onclick: function (ev) {
             Array.prototype.forEach.call(tabs.children, function (b) { b.setAttribute("aria-selected", "false"); });
             ev.currentTarget.setAttribute("aria-selected", "true");
-            clearTimers();
-            holder.replaceChildren(renderRun(traces[i], outs[i], false));
+            clearTimers(ch);
+            holder.replaceChildren(renderRun(traces[i], outs[i], false, ch));
           }
         }));
       });
-      holder.appendChild(renderRun(traces[0], outs[0], animate));
+      holder.appendChild(renderRun(traces[0], outs[0], animate, ch));
       var sc = entry.output.store_check;
       return el("div", null, tabs,
-        sc ? el("p", { class: "store-check" }, icon("shield"), "草稿库核对：申请 " + sc.request_id + " 共 " + sc.drafts_for_request + " 份草稿（" + sc.draft_ids.join("、") + "），草稿库合计 " + sc.total_drafts_in_store + " 份。") : null,
+        sc ? el("p", { class: "store-check" }, icon("shield"), sc.drafts_for_request
+          ? "草稿库核对：申请 " + sc.request_id + " 共 " + sc.drafts_for_request + " 份草稿（" + sc.draft_ids.join("、") + "），草稿库合计 " + sc.total_drafts_in_store + " 份。"
+          : "草稿库核对：申请 " + sc.request_id + " 没有草稿，草稿库合计 " + sc.total_drafts_in_store + " 份。") : null,
         holder);
     }
     var btnGraph = seg("节点图", "branch", mode === "graph", function () { show("graph"); });
@@ -716,7 +751,7 @@
       btnGraph.setAttribute("aria-pressed", next === "graph" ? "true" : "false");
       btnList.setAttribute("aria-pressed", next === "list" ? "true" : "false");
       btnExpand.hidden = next === "graph";
-      clearTimers();
+      clearTimers(ch);
       content.replaceChildren(next === "graph" ? graphView() : listView(animate));
       if (next === "graph") requestAnimationFrame(function () { graph.layout(); });
     }
@@ -740,7 +775,7 @@
     var prompt = pa === pb ? ["相同", "相同"] : pa < pb ? ["迭代前", "迭代后"] : ["迭代后", "迭代前"];  // 页面上不显示版本号
     var rows = [
       ["素材", ra.asset_id, rb.asset_id],
-      ["渠道", CHANNEL[ra.channel] || ra.channel, CHANNEL[rb.channel] || rb.channel],
+      ["渠道", channelName(ra.channel), channelName(rb.channel)],
       ["申请时间", ra.publish_at, rb.publish_at],
       ["日期不能改", ra.constraints && ra.constraints.date_fixed ? "是" : "否", rb.constraints && rb.constraints.date_fixed ? "是" : "否"],
       ["提示词", prompt[0], prompt[1]]
@@ -780,7 +815,7 @@
   function trunkStep(step) {
     var meta = toolMeta(step.tool);
     var b = nodeBadge(step);
-    return el("li", { class: "trunk-step tool-" + (TOOLS[step.tool] ? step.tool : "none") },
+    return el("li", { class: "trunk-step tool-" + toolClass(step.tool) },
       icon(meta.icon, "tool-icon"),
       el("div", { class: "trunk-body" },
         el("div", { class: "trunk-title" }, el("span", { class: "step-no", text: "第 " + step.step + " 步" }), el("strong", { text: meta.label }), el("code", { text: step.tool }), el("span", { class: "slot-badge tone-" + b.tone, text: b.text })),
@@ -792,7 +827,7 @@
     var keys = ["asset_id", "date", "time", "publish_at", "requires_confirmation", "deep_check", "status"];
     var args = keys.filter(function (k) { return step.args && step.args[k] !== undefined; }).map(function (k) { return k + " = " + raw(step.args[k]); }).join("   ");
     var b = nodeBadge(step);
-    return el("li", { class: "bstep tool-" + (TOOLS[step.tool] ? step.tool : "none") + (isFork ? " is-fork" : "") + (step.ok ? "" : " failed") },
+    return el("li", { class: "bstep tool-" + toolClass(step.tool) + (isFork ? " is-fork" : "") + (step.ok ? "" : " failed") },
       el("div", { class: "bstep-head" }, icon(meta.icon, "tool-icon"),
         el("span", { class: "tool-names" }, el("span", { class: "tool-cn", text: meta.label }), el("code", { class: "tool-en", text: step.tool || "—" })),
         el("span", { class: "step-no", text: "第 " + step.step + " 步" })),
@@ -806,10 +841,10 @@
     var d = out.draft;
     return el("div", { class: "branch-outcome tone-" + s.tone }, icon(s.icon, "final-icon"),
       el("div", null, el("p", { class: "final-kicker", text: "最终结果" }), el("strong", { text: s.label }),
-        el("p", { class: "small", text: d ? "草稿 " + d.draft_id + " · " + d.publish_at + " · " + (DRAFT_STATUS[d.status] || d.status) : "没有保存草稿" })));
+        el("p", { class: "small", text: d ? "草稿 " + d.draft_id + " · " + d.publish_at + " · " + (draftStatusName(d.status)) : "没有保存草稿" })));
   }
   function renderPair(pair) {
-    clearTimers();
+    clearTimers("replay");
     var A = findCase(pair.a), B = findCase(pair.b);
     if (!A || !B) return el("p", { class: "card", text: "缺少对比所需的录制。" });
     var ta = runsOf(A.trace)[0], tb = runsOf(B.trace)[0], oa = runsOf(A.output)[0], ob = runsOf(B.output)[0];
@@ -817,7 +852,7 @@
     while (fork < Math.min(ta.steps.length, tb.steps.length) && sameStep(ta.steps[fork], tb.steps[fork])) fork++;
     var rows = requestRows(A.request, B.request, ta.prompt_version, tb.prompt_version);
     var graph = buildForkGraph({
-      ta: ta, tb: tb, oa: oa, ob: ob, fork: fork,
+      ta: ta, tb: tb, oa: oa, ob: ob, fork: fork, channel: "replay",
       startTitle: "输入：申请单", startMeta: pair.startMeta, startRender: function () { return panelStart(rows); },
       forkTitle: "分叉点", forkMeta: "第 " + (fork + 1) + " 步起不同", forkRender: function () { return panelFork(pair, ta, tb, fork); }
     });
@@ -839,7 +874,7 @@
       replayMode = next;
       btnGraph.setAttribute("aria-pressed", next === "graph" ? "true" : "false");
       btnList.setAttribute("aria-pressed", next === "list" ? "true" : "false");
-      clearTimers();
+      clearTimers("replay");
       processBox.replaceChildren(next === "graph" ? graph.wrap(sideLegend(pair.labelA, pair.labelB)) : listView);
       if (next === "graph") requestAnimationFrame(graph.layout);
     }
@@ -890,8 +925,16 @@
     var entry = pair ? null : (findCase(id) || DATA.cases[0]);
     if (!pair && !entry) return;
     var key = pair ? pair.id : entry.case;
+    var focused = document.activeElement;
+    var fromList = !!(focused && focused.closest && focused.closest("#case-list"));
+    var fromDetail = !!(focused && focused.closest && focused.closest("#case-detail"));
+    currentKey = key;
     renderCaseList(key);
-    document.getElementById("case-detail").replaceChildren(pair ? renderPair(pair) : renderEntry(entry));
+    var detail = document.getElementById("case-detail");
+    detail.replaceChildren(pair ? renderPair(pair) : renderEntry(entry));
+    // 列表和详情都重新渲染了：把焦点放回新选中的那一项（或新详情的标题），键盘用户不会被甩回页首
+    if (fromList) { var cur = document.querySelector("#case-list .case-item.active"); if (cur) cur.focus(); }
+    else if (fromDetail) { var h2 = detail.querySelector("h2"); if (h2) { h2.setAttribute("tabindex", "-1"); h2.focus(); } }
     if (keepView) return;
     setHash("case=" + key);
     showView("replay");
@@ -1047,7 +1090,7 @@
         case_id: current,
         request: {
           asset_id: f.asset.value.trim(), channel: f.channel.value, publish_at: f.date.value + " " + f.time.value,
-          note: f.note.value, instructions: f.instr.value.trim(), constraints: { date_fixed: f.fixed.checked }
+          note: f.note.value.trim(), instructions: f.instr.value.trim(), constraints: { date_fixed: f.fixed.checked }
         },
         fault_injection: f.fault.value ? { save_draft: f.fault.value } : {},
         repeat: f.repeat.checked ? 2 : 1
@@ -1057,27 +1100,35 @@
       var started = Date.now();
       var label = el("span", { text: "运行中…" });
       status.replaceChildren(el("span", { class: "spinner", "aria-hidden": "true" }), label);
+      clearTimers("task");
+      resultBox.replaceChildren(el("div", { class: "task-empty" }, el("span", { class: "spinner", "aria-hidden": "true" }), el("p", { text: "正在用真实模型运行，结果出来后会在这里画出节点图。" })));
+      function showError(message, offerReplay) {
+        status.replaceChildren(icon("alert"), message);
+        resultBox.replaceChildren(el("div", { class: "task-empty" }, icon("alert"), el("p", { text: message }),
+          offerReplay ? el("button", { type: "button", class: "btn btn-ghost", onclick: function () { selectCase(current); } }, icon("play"), "查看这个场景的录制") : null));
+      }
       var tick = setInterval(function () { label.textContent = "运行中，已等待 " + Math.round((Date.now() - started) / 1000) + " 秒…"; }, 500);
       fetch("/api/run", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) })
-        .then(function (resp) { return resp.json().then(function (body) { return { status: resp.status, body: body }; }); })
+        .then(function (resp) {
+          return resp.json().then(function (body) { return { status: resp.status, body: body }; }, function () {
+            return { status: resp.status, body: { ok: false, error: { message: "服务返回了无法识别的响应（HTTP " + resp.status + "），可以先看这个场景的录制。", fallback: "replay" } } };
+          });
+        })
         .then(function (r) {
           if (r.body.ok) {
-            status.replaceChildren(icon("check"), "完成，用时 " + r.body.elapsed_s + " 秒。");
+            var outsDone = runsOf(r.body.output), st = statusOf(outsDone[outsDone.length - 1].status);
+            status.replaceChildren(icon(st.icon), "运行结束：" + st.short + "，用时 " + r.body.elapsed_s + " 秒。");
             var req = r.body.case.request;
-            var entry = { case: r.body.case.case, title: "本次运行：" + req.asset_id + " · " + (CHANNEL[req.channel] || req.channel) + " · " + req.publish_at, covers: [], request: req,
+            var entry = { case: r.body.case.case, title: "本次运行：" + req.asset_id + " · " + (channelName(req.channel)) + " · " + req.publish_at, covers: [], request: req,
               fault_injection: r.body.case.fault_injection, options: r.body.case.options, output: r.body.output, trace: r.body.trace };
             resultBox.replaceChildren(renderEntry(entry, { mode: "graph", live: true }));
             resultBox.parentNode.scrollIntoView({ behavior: "smooth", block: "start" });
           } else {
             var err = r.body.error || {};
-            status.replaceChildren(icon("alert"), err.message || ("请求失败（HTTP " + r.status + "）"));
-            if (err.fallback === "replay") {
-              resultBox.replaceChildren(el("p", { class: "task-empty" }, "可以先看这个场景的真实录制：",
-                el("button", { type: "button", class: "btn btn-ghost", onclick: function () { selectCase(current); } }, icon("play"), "查看回放")));
-            }
+            showError(err.message || ("请求失败（HTTP " + r.status + "）"), err.fallback === "replay");
           }
         })
-        .catch(function () { status.replaceChildren(icon("alert"), "网络错误，可以先看运行回放。"); })
+        .catch(function () { showError("网络错误，没有拿到结果。可以先看这个场景的录制。", true); })
         .then(function () { clearInterval(tick); button.disabled = false; });
     }
     view.replaceChildren(form, el("section", { class: "card task-result" }, el("h3", { class: "card-title" }, icon("branch"), "运行结果"), resultBox));
@@ -1085,6 +1136,8 @@
 
   // ---- 视图切换与启动 ------------------------------------------------------------
   function showView(name) {
+    if (name !== "replay") clearTimers("replay");
+    if (name !== "task") clearTimers("task");
     ["replay", "data", "task"].forEach(function (v) {
       document.getElementById("view-" + v).hidden = v !== name;
       Array.prototype.forEach.call(document.querySelectorAll('[data-view="' + v + '"]'), function (tab) {
@@ -1108,12 +1161,15 @@
         if (v === "data") renderData();
         if (v === "task" && health) renderTask(health);
         showView(v);
-        setHash("view=" + v);
+        setHash(v === "replay" && currentKey ? "case=" + currentKey : "view=" + v);
       });
     });
     window.addEventListener("hashchange", function () {
       var h = location.hash.slice(1);
-      if (h.indexOf("case=") === 0) selectCase(decodeURIComponent(h.slice(5)));
+      if (h.indexOf("case=") === 0) selectCase(safeDecode(h.slice(5)));
+      else if (h === "view=data") { renderData(); showView("data"); }
+      else if (h === "view=task" && health) { renderTask(health); showView("task"); }
+      else if (h === "view=replay") showView("replay");
     });
     var hash = location.hash.slice(1);
     if (hash === "view=compare") hash = "case=cmp-date";  // 旧链接
@@ -1122,7 +1178,7 @@
       selectCase(null, true);
       if (hash === "view=data") { renderData(); showView("data"); }
     } else {
-      selectCase(hash.indexOf("case=") === 0 ? decodeURIComponent(hash.slice(5)) : null);
+      selectCase(hash.indexOf("case=") === 0 ? safeDecode(hash.slice(5)) : null);
     }
     // GitHub Pages 是纯静态托管，没有接口，不发探测请求
     if ((location.protocol === "http:" || location.protocol === "https:") && !/\.github\.io$/.test(location.hostname)) {
