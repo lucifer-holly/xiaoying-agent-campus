@@ -138,13 +138,13 @@
   // ---- 顶部指标与工作方式 ----------------------------------------------------
   function renderStats() {
     var items = [
-      ["模型", DATA.model || "—", "阿里云百炼 · OpenAI 兼容接口 · 关闭思考模式"],
-      ["技术路线", "ReAct 循环 + Function Calling", "Python 3.10+，只依赖 openai SDK，不用 Agent 框架；硬约束写在工具层和输出校验器里"],
-      ["验收用例", DATA.cases.length + " 个，均为真实模型录制", "正常排期、信息不全、规则风险、时段冲突、工具失败、重复提交、步数上限"]
+      ["模型", DATA.model || "—"],
+      ["技术路线", "ReAct 循环 + Function Calling"],
+      ["验收用例", DATA.cases.length + " 个，均为真实模型录制"]
     ];
     var box = document.getElementById("stats");
     box.replaceChildren.apply(box, items.map(function (it) {
-      return el("li", null, el("span", { class: "stat-label", text: it[0] }), el("span", { class: "stat-value", text: it[1] }), el("span", { class: "stat-sub", text: it[2] }));
+      return el("li", null, el("span", { class: "stat-label", text: it[0] }), el("span", { class: "stat-value", text: it[1] }));
     }));
     document.getElementById("brand-mark").appendChild(icon("calendarCheck"));
   }
@@ -270,17 +270,16 @@
     var warnings = (out.validator && out.validator.warnings) || [];
     var run = out.run || {};
     var usage = trace && trace.llm_usage;
-    var meta = ["模型 " + (run.model || "—"), "提示词 " + (run.prompt_version || "—"), "用了 " + run.steps_used + " 步 / 上限 " + run.max_steps, "结束原因 " + run.end_reason];
-    if (usage && usage.calls) meta.push("模型耗时 " + (usage.latency_ms / 1000).toFixed(1) + " 秒", "tokens " + usage.prompt_tokens + " + " + usage.completion_tokens);
+    var meta = ["用了 " + run.steps_used + " 步"];
+    if (usage && usage.calls) meta.push("耗时 " + (usage.latency_ms / 1000).toFixed(1) + " 秒");
     return el("section", { class: "card final" },
       el("div", { class: "final-band tone-" + s.tone },
         icon(s.icon, "final-icon"),
-        el("div", null, el("p", { class: "final-kicker", text: "最终输出" }), el("h3", { text: s.label })),
-        el("code", { class: "final-code", text: out.status })
+        el("div", null, el("p", { class: "final-kicker", text: "最终输出" }), el("h3", { text: s.label }))
       ),
       el("div", { class: "final-body" },
         el("p", { class: "message", text: out.message }),
-        out.facts_summary ? el("div", { class: "facts" }, icon("shield"), el("div", null, el("p", { class: "facts-label", text: "系统核对（由代码按草稿库生成，不采信模型的说法）" }), el("p", { text: out.facts_summary }))) : null,
+        out.facts_summary ? el("div", { class: "facts" }, icon("shield"), el("div", null, el("p", { class: "facts-label", text: "系统核对" }), el("p", { text: out.facts_summary }))) : null,
         ticket,
         rows.length ? el("dl", { class: "kv" }, rows.map(function (r) { return [el("dt", { text: r[0] }), el("dd", { text: r[1] })]; })) : null,
         corrections.length ? el("div", { class: "corrections" },
@@ -319,7 +318,7 @@
     var body = el("div");
     var head = el("header", { class: "detail-head" },
       el("div", null,
-        el("p", { class: "detail-kicker" }, el("span", { class: "case-no", text: caseNo(entry) }), el("code", { text: entry.case })),
+        el("p", { class: "detail-kicker" }, el("span", { class: "case-no", text: caseNo(entry) })),
         el("h2", { text: title[0] }),
         title[1] ? el("p", { class: "detail-desc", text: title[1] }) : null,
         entry.covers && entry.covers.length ? el("div", { class: "tags" }, entry.covers.map(function (c) { return el("span", { class: "tag tag-brand", text: c }); })) : null
@@ -411,7 +410,8 @@
       ["日期不能改", ra.constraints && ra.constraints.date_fixed ? "是" : "否", rb.constraints && rb.constraints.date_fixed ? "是" : "否"],
       ["提示词版本", pa, pb]
     ];
-    return rows.map(function (r) { return { label: r[0], a: fmt(r[1]), b: fmt(r[2]), diff: fmt(r[1]) !== fmt(r[2]) }; });
+    return rows.map(function (r) { return { label: r[0], a: fmt(r[1]), b: fmt(r[2]), diff: fmt(r[1]) !== fmt(r[2]) }; })
+      .filter(function (r) { return r.label !== "提示词版本" || r.diff; });
   }
   function sideTicket(side, label, rows, key, entry) {
     return el("div", { class: "cmp-ticket side-" + side },
@@ -536,8 +536,7 @@
       el("p", { class: "panel-sub", text: "调用参数" }),
       panelKV(Object.keys(step.args || {}).map(function (k) { return [k, raw(step.args[k])]; })),
       el("p", { class: "panel-sub", text: "这次模型调用" }),
-      panelKV([["耗时", llm.latency_ms ? (llm.latency_ms / 1000).toFixed(1) + " 秒" : null], ["tokens（输入 + 输出）", llm.prompt_tokens ? llm.prompt_tokens + " + " + llm.completion_tokens : null]]),
-      el("p", { class: "muted small", text: "“模型的理由”是模型调用工具时在 decision_note 参数里写下的一句话；思考模式已关闭，不记录模型内部的推理过程。" }));
+      panelKV([["耗时", llm.latency_ms ? (llm.latency_ms / 1000).toFixed(1) + " 秒" : null], ["tokens（输入 + 输出）", llm.prompt_tokens ? llm.prompt_tokens + " + " + llm.completion_tokens : null]]));
   }
   function panelStart(pair, rows) {
     return el("div", null,
@@ -568,8 +567,8 @@
     return el("div", null,
       panelHead("最终结果", s.label, side),
       el("p", { class: "panel-message", text: out.message }),
-      out.facts_summary ? el("div", { class: "facts" }, icon("shield"), el("div", null, el("p", { class: "facts-label", text: "系统核对（代码按草稿库生成）" }), el("p", { text: out.facts_summary }))) : null,
-      panelKV([["status", out.status],
+      out.facts_summary ? el("div", { class: "facts" }, icon("shield"), el("div", null, el("p", { class: "facts-label", text: "系统核对" }), el("p", { text: out.facts_summary }))) : null,
+      panelKV([
         ["草稿", d ? d.draft_id + " · " + d.publish_at + " · " + (DRAFT_STATUS[d.status] || d.status) : "没有保存草稿"],
         ["校验器更正", corr.length ? corr.length + " 处" : "无（模型结论与草稿库一致）"],
         ["步数", out.run ? out.run.steps_used + " / 上限 " + out.run.max_steps : null],
@@ -580,7 +579,7 @@
     var corr = (out.validator && out.validator.corrections) || [];
     return el("div", null,
       panelHead("finish 之后 · 校验器核对", "以草稿库为准，不采信模型的说法", side),
-      el("p", { class: "panel-message", text: "模型调用 finish 提交结论后，校验器拿它和调用台账、草稿库逐项核对：草稿是否真的存在、状态是否一致、说明里有没有声称已保存或已发布。" }),
+      el("p", { class: "panel-message", text: "模型提交结论后，系统按草稿库逐项核对：草稿是否真的存在、状态是否一致、说明里有没有声称已保存或已发布。" }),
       corr.length ? el("ul", { class: "panel-list" }, corr.map(function (c) { return el("li", { text: fmt(c.from) + " → " + fmt(c.to) + "：" + c.reason }); }))
         : el("p", { class: "validator-ok" }, icon("check"), "这次没有需要更正的地方"),
       out.facts_summary ? el("p", { class: "muted small", text: out.facts_summary }) : null);
@@ -721,7 +720,7 @@
     var view = document.getElementById("view-compare");
     view.replaceChildren(el("header", { class: "cmp-intro" },
       el("h2", { text: "模型如何应变" }),
-      el("p", { text: "把两次真实运行并排放在一起：输入只差一个条件，看模型在哪一步、因为什么做出了不同的决定。每张卡片里的“模型的理由”是模型调用工具时自己写下的一句话。" })));
+      el("p", { text: "把两次真实运行并排放在一起：输入只差一个条件，看模型在哪一步、因为什么做出了不同的决定。" })));
     COMPARE_PAIRS.forEach(function (pair) {
       var A = findCase(pair.a), B = findCase(pair.b);
       if (!A || !B) return;
@@ -782,15 +781,8 @@
   function renderLive(health) {
     var view = document.getElementById("view-live");
     view.replaceChildren();
-    var intro = el("section", { class: "card live-intro" }, icon("bolt"), el("div", null,
-      el("h3", { text: "用真实模型现场跑一次" }),
-      el("ul", null,
-        el("li", { text: "选一个场景直接运行，可以先改申请单；模型 " + (health.model || "—") + "，通常 5~25 秒。" }),
-        el("li", { text: "每次运行使用独立的内存草稿库，只读合成数据，只保存草稿，不会真实发布。" }),
-        el("li", { text: "按 IP 限流：" + health.quota.per_ip + "；今天已用 " + health.quota.used_today + " / " + health.quota.daily_limit + " 次，超限时自动切回回放。" })
-      )));
     if (!health.live_enabled) {
-      view.append(intro, el("p", { class: "card", text: "实时运行未开启：服务端没有配置模型密钥。可以先看“运行回放”。" }));
+      view.append(el("p", { class: "card", text: "实时运行暂不可用，可以先看“运行回放”。" }));
       return;
     }
     // 申请单字段（默认收起，只显示摘要）
@@ -898,13 +890,13 @@
       var started = Date.now();
       var label = el("span", { text: "运行中…" });
       status.replaceChildren(el("span", { class: "spinner", "aria-hidden": "true" }), label);
-      var tick = setInterval(function () { label.textContent = "运行中，已等待 " + Math.round((Date.now() - started) / 1000) + " 秒（真实模型通常 5~25 秒）"; }, 500);
+      var tick = setInterval(function () { label.textContent = "运行中，已等待 " + Math.round((Date.now() - started) / 1000) + " 秒…"; }, 500);
       result.replaceChildren();
       fetch("/api/run", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) })
         .then(function (resp) { return resp.json().then(function (body) { return { status: resp.status, body: body }; }); })
         .then(function (r) {
           if (r.body.ok) {
-            status.replaceChildren(icon("check"), "完成，用时 " + r.body.elapsed_s + " 秒；今天已用 " + r.body.quota.used_today + " / " + r.body.quota.daily_limit + " 次。");
+            status.replaceChildren(icon("check"), "完成，用时 " + r.body.elapsed_s + " 秒。");
             var req = r.body.case.request;
             var entry = { case: r.body.case.case, title: "实时运行结果：" + req.asset_id + " · " + (CHANNEL[req.channel] || req.channel) + " · " + req.publish_at, covers: [], request: req, fault_injection: r.body.case.fault_injection, options: r.body.case.options, output: r.body.output, trace: r.body.trace };
             result.appendChild(renderEntry(entry, { animate: true }));
@@ -921,7 +913,7 @@
         .catch(function () { status.replaceChildren(icon("alert"), "网络错误，已切换到回放。"); selectCase(current); })
         .then(function () { clearInterval(tick); button.disabled = false; });
     }
-    view.append(intro, form, result);
+    view.append(form, result);
   }
 
   // ---- 视图切换与启动 ------------------------------------------------------------
@@ -938,7 +930,6 @@
     renderUSP();
     renderStats();
     renderPipeline();
-    document.getElementById("generated").textContent = DATA.generated_at ? "回放数据生成于 " + DATA.generated_at + " · 提示词 " + (DATA.prompt_version || "—") : "";
     Array.prototype.forEach.call(document.querySelectorAll(".tabs [data-view]"), function (tab) {
       tab.addEventListener("click", function () {
         var v = tab.getAttribute("data-view");
